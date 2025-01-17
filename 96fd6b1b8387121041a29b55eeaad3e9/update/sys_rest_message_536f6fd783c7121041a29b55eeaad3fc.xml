@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_rest_message">
+    <sys_rest_message action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <authentication_type>no_authentication</authentication_type>
+        <basic_auth_password/>
+        <basic_auth_profile/>
+        <basic_auth_user/>
+        <description/>
+        <name>Stairwell Lookup</name>
+        <oauth2_profile/>
+        <protocol_name/>
+        <rest_endpoint>https://app.stairwell.com/v1/generateRunToGround:generate</rest_endpoint>
+        <sys_class_name>sys_rest_message</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2025-01-17 23:38:18</sys_created_on>
+        <sys_id>536f6fd783c7121041a29b55eeaad3fc</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>Stairwell Lookup</sys_name>
+        <sys_package display_value="Stairwell Integration for Threat Intelligence Security Centre" source="x_1598807_stairwel">96fd6b1b8387121041a29b55eeaad3e9</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="Stairwell Integration for Threat Intelligence Security Centre">96fd6b1b8387121041a29b55eeaad3e9</sys_scope>
+        <sys_update_name>sys_rest_message_536f6fd783c7121041a29b55eeaad3fc</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2025-01-17 23:38:18</sys_updated_on>
+        <use_basic_auth>false</use_basic_auth>
+        <use_mutual_auth>false</use_mutual_auth>
+    </sys_rest_message>
+</record_update>
