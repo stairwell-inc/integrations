@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_rest_message_fn_headers">
+    <sys_rest_message_fn_headers action="DELETE">
+        <name>accept</name>
+        <rest_message_function display_value="GET">adb03b5b83c7121041a29b55eeaad393</rest_message_function>
+        <sys_class_name>sys_rest_message_fn_headers</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2025-01-17 23:43:53</sys_created_on>
+        <sys_id>a581739b83c7121041a29b55eeaad306</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>accept</sys_name>
+        <sys_package display_value="Stairwell Integration for Threat Intelligence Security Centre" source="x_1598807_stairwel">96fd6b1b8387121041a29b55eeaad3e9</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="Stairwell Integration for Threat Intelligence Security Centre">96fd6b1b8387121041a29b55eeaad3e9</sys_scope>
+        <sys_update_name>sys_rest_message_fn_headers_a581739b83c7121041a29b55eeaad306</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2025-01-17 23:43:53</sys_updated_on>
+        <value>application/json</value>
+    </sys_rest_message_fn_headers>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="Stairwell Integration for Threat Intelligence Security Centre">96fd6b1b8387121041a29b55eeaad3e9</application>
+        <file_path/>
+        <instance_id>dc9df553dbca3dd002022a59139619ab</instance_id>
+        <instance_name>dev196453</instance_name>
+        <name>sys_rest_message_fn_headers_a581739b83c7121041a29b55eeaad306</name>
+        <payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_rest_message_fn_headers"><sys_rest_message_fn_headers action="INSERT_OR_UPDATE"><name>accept</name><rest_message_function display_value="GET">adb03b5b83c7121041a29b55eeaad393</rest_message_function><sys_class_name>sys_rest_message_fn_headers</sys_class_name><sys_created_by>admin</sys_created_by><sys_created_on>2025-01-17 23:43:53</sys_created_on><sys_id>a581739b83c7121041a29b55eeaad306</sys_id><sys_mod_count>0</sys_mod_count><sys_name>accept</sys_name><sys_package display_value="Stairwell Integration for Threat Intelligence Security Centre" source="x_1598807_stairwel">96fd6b1b8387121041a29b55eeaad3e9</sys_package><sys_policy/><sys_scope display_value="Stairwell Integration for Threat Intelligence Security Centre">96fd6b1b8387121041a29b55eeaad3e9</sys_scope><sys_update_name>sys_rest_message_fn_headers_a581739b83c7121041a29b55eeaad306</sys_update_name><sys_updated_by>admin</sys_updated_by><sys_updated_on>2025-01-17 23:43:53</sys_updated_on><value>application/json</value></sys_rest_message_fn_headers></record_update>]]></payload>
+        <payload_hash>-400502184</payload_hash>
+        <record_name>accept</record_name>
+        <reverted_from/>
+        <source>d6fdaf5783c7121041a29b55eeaad363</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2025-01-17 23:43:53</sys_created_on>
+        <sys_id>d7c1ff9b83c7121041a29b55eeaad383</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>19476a6da0a0000001</sys_recorded_at>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2025-01-17 23:43:53</sys_updated_on>
+        <type>HTTP Headers</type>
+        <update_guid>dbc1ff9b3fc7121071b1fb248f422e82</update_guid>
+        <update_guid_history>dbc1ff9b3fc7121071b1fb248f422e82:-400502184</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2025-01-20 19:52:25</sys_created_on>
+        <sys_db_object display_value="" name="sys_rest_message_fn_headers">sys_rest_message_fn_headers</sys_db_object>
+        <sys_id>1aa630c781394530832d827d4c210900</sys_id>
+        <sys_metadata>a581739b83c7121041a29b55eeaad306</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>accept</sys_name>
+        <sys_package display_value="Stairwell Integration for Threat Intelligence Security Centre" source="x_1598807_stairwel">96fd6b1b8387121041a29b55eeaad3e9</sys_package>
+        <sys_parent display_value="GET">adb03b5b83c7121041a29b55eeaad393</sys_parent>
+        <sys_policy/>
+        <sys_scope display_value="Stairwell Integration for Threat Intelligence Security Centre">96fd6b1b8387121041a29b55eeaad3e9</sys_scope>
+        <sys_scope_delete display_value="">0f9e04ad84024242abdce0f385119521</sys_scope_delete>
+        <sys_update_name>sys_rest_message_fn_headers_a581739b83c7121041a29b55eeaad306</sys_update_name>
+        <sys_update_version display_value="sys_rest_message_fn_headers_a581739b83c7121041a29b55eeaad306">d7c1ff9b83c7121041a29b55eeaad383</sys_update_version>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2025-01-20 19:52:25</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>
