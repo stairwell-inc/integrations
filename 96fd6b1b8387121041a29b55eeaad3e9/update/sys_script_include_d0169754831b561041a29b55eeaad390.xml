@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_1598807_stairwel.StairwellHtmlUtils</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <mobile_callable>false</mobile_callable>
+        <name>StairwellHtmlUtils</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[var StairwellHtmlUtils = Class.create();
+StairwellHtmlUtils.prototype = {
+    initialize: function() {
+        this.HTMLUtils = new sn_sec_tisc.HTMLUtils();
+    },
+
+    getLastAnalysisResultsHtml: function(lasAnalysisResultsJSON) {
+        if (gs.nil(lasAnalysisResultsJSON)) {
+            return "";
+        }
+
+        var analysisCategoryMap = {
+            "timeout": "Timed-Out",
+            "undetected": "Undetected",
+            "harmless": "Harmless",
+            "suspicious": "Suspicious",
+            "malicious": "Malicious",
+            "type-unsupported": "Unsupported Type"
+        };
+
+        var analysisCategorySortMap = {
+            "Malicious": 0,
+            "Suspicious": 1,
+            "Harmless": 2,
+            "Undetected": 3,
+            "timeout": 4,
+            "Unsupported Type": 5
+        };
+
+        var tableHTMLContent = {
+            "headers": [
+                "Engine",
+                "Engine Analysis Result",
+                "Normalized Analysis Result"
+            ],
+            "rows": []
+        };
+
+        for (var engineName in lasAnalysisResultsJSON) {
+            if (lasAnalysisResultsJSON[engineName].hasOwnProperty("category")) {
+                tableHTMLContent.rows.push([
+                    engineName,
+                    gs.nil(lasAnalysisResultsJSON[engineName]["result"]) ? "-" : lasAnalysisResultsJSON[engineName]["result"],
+                    analysisCategoryMap[lasAnalysisResultsJSON[engineName]["category"]]
+                ]);
+            }
+        }
+
+        tableHTMLContent.rows.sort(function(row1, row2) {
+            return (analysisCategorySortMap[row1[2]] - analysisCategorySortMap[row2[2]]);
+        });
+
+        if (tableHTMLContent.rows.length > 0) {
+            var tableHtml = this.HTMLUtils.getTableHTML(tableHTMLContent, "bordered-table");
+            return "<h2>Analysis Results</h2><hr>" + tableHtml;
+        } else {
+            return "";
+        }
+    },
+
+    getWhoIsSectionHtml: function(whoIsStringContent) {
+        try {
+            if (gs.nil(whoIsStringContent)) {
+                return "";
+            }
+            var whoIsLines = whoIsStringContent.split("\n");
+            var whoIsArr = [];
+            for (var idx in whoIsLines) {
+                var currLine = whoIsLines[idx];
+                var colonIdx = currLine.indexOf(":");
+                if ((colonIdx == -1) || (colonIdx == currLine.length - 1)) {
+                    gs.error("TISC INT VT: Key value pair not found in whois line entry: {0}", currLine);
+                    continue;
+                }
+                var currKey = currLine.substring(0, colonIdx);
+                var currValue = currLine.substring(colonIdx + 1, currLine.length);
+                whoIsArr.push([currKey, currValue]);
+            }
+            return this.HTMLUtils.getSectionHtml("Whois Entry", whoIsArr);
+        } catch (ex) {
+            gs.error("TISC INT VT: Exception occurred while generating HTML content for who is data");
+            return "";
+        }
+    },
+
+    getUTCTimeString: function(epochTime) {
+        if (gs.nil(epochTime)) {
+            return "";
+        }
+        var gdt = new GlideDateTime();
+        gdt.setNumericValue(parseInt(epochTime) * 1000);
+        return gdt.getValue() + " UTC";
+    },
+
+    getDomainUrlCategoriesHtml: function(categoryJSON) {
+        if (gs.nil(categoryJSON)) {
+            return "";
+        }
+        var catJsonArr = [];
+        for (var key in categoryJSON) {
+            catJsonArr.push([
+                key,
+                categoryJSON[key]
+            ]);
+        }
+        return this.HTMLUtils.getSectionHtml("Categories", catJsonArr);
+    },
+
+    getDomainPopularityHtml: function(popularityJSON) {
+        if (gs.nil(popularityJSON)) {
+            return "";
+        }
+        var tableHTMLContent = {
+            "headers": [
+                "Rank",
+                "Position",
+                "Ingestion Time"
+            ],
+            "rows": []
+        };
+
+        for (var key in popularityJSON) {
+            tableHTMLContent["rows"].push([
+                key,
+                popularityJSON[key].rank,
+                this.getUTCTimeString(popularityJSON[key].timestamp)
+            ]);
+        }
+
+        if (tableHTMLContent.rows.length > 0) {
+            var tableHtml = this.HTMLUtils.getTableHTML(tableHTMLContent, "bordered-table");
+            return "<h2>Popularity</h2><hr>" + tableHtml;
+        }
+
+        return "";
+    },
+
+    getDomainDnsRecordHtml: function(dnsRecordJSON) {
+        if (gs.nil(dnsRecordJSON)) {
+            return "";
+        }
+        var tableHTMLContent = {
+            "headers": [
+                "Record Type",
+                "TTL",
+                "Value"
+            ],
+            "rows": []
+        };
+
+        for (var idx in dnsRecordJSON) {
+            tableHTMLContent["rows"].push([
+                dnsRecordJSON[idx].type,
+                dnsRecordJSON[idx].ttl,
+                dnsRecordJSON[idx].value
+            ]);
+        }
+
+        if (tableHTMLContent.rows.length > 0) {
+            var tableHtml = this.HTMLUtils.getTableHTML(tableHTMLContent, "bordered-table");
+            return "<h2>Last DNS Records</h2><hr>" + tableHtml;
+        }
+
+        return "";
+    },
+
+    setJsonAttributeKeyValueArr: function(srcObj, srcKey, targetObj, targetKey, transformFunction) {
+        if (srcObj.hasOwnProperty(srcKey)) {
+            if (!gs.nil(transformFunction)) {
+                targetObj.push([targetKey, transformFunction(srcObj[srcKey])]);
+            } else {
+                targetObj.push([targetKey, srcObj[srcKey]]);
+            }
+        }
+    },
+
+    addToHtmlContentArr: function(htmlContentArr, htmlContent) {
+        if (!gs.nil(htmlContent)) {
+            htmlContentArr.push(htmlContent);
+        }
+    },
+
+    getRawPayloadHTML: function(rawJson, obsType, observableSysId) {
+
+        try {
+            if (!(rawJson.hasOwnProperty("data") && rawJson.data.hasOwnProperty("attributes"))) {
+                return "";
+            }
+
+            var htmlHeader = "<!DOCTYPE html> " +
+                "<head>" +
+                "<style>" +
+                "body {" +
+                "margin: 0;" +
+                "width: 100%;" +
+                "}" +
+                "table {" +
+                "font-size: 15px;" +
+                "font-family: verdana;" +
+                "font-weight: normal;" +
+                "}" +
+                "td {" +
+                "padding: 8px 50px 8px 8px;" +
+                "}" +
+                "table.bordered-table {" +
+                "border-collapse: collapse;" +
+                "text-align: center;" +
+                "}" +
+                "table.bordered-table td {" +
+                "padding: 8px 50px 8px 8px;" +
+                "border: 1px solid black;" +
+                "}" +
+                "</style>" +
+                "</head>" +
+                "<body>";
+            var htmlContentArr = [];
+            var currAttrs = rawJson.data.attributes;
+            var obsGr = new GlideRecord("sn_sec_tisc_observable");
+            if (!obsGr.get(observableSysId)) {
+                return "";
+            }
+
+            var secondaryHeaderArr = [];
+            if (currAttrs.hasOwnProperty("last_analysis_date") && !gs.nil(currAttrs.last_analysis_date)) {
+                secondaryHeaderArr.push(["Last Analysis Date", this.getUTCTimeString(currAttrs.last_analysis_date)]);
+            }
+            var titleSection = this.HTMLUtils.getTitleSectionWithPrimarySecondaryFields(obsGr.getValue("value"), secondaryHeaderArr);
+            if (!gs.nil(titleSection)) {
+                this.addToHtmlContentArr(htmlContentArr, titleSection);
+                htmlContentArr.push("<hr>");
+            }
+
+
+            if ((obsType == "6d43eb9c43335110baf06e434ab8f2ee") || (obsType == "725323dc43335110baf06e434ab8f278")) { // IPv4 & IPv6
+                var attrObj = [];
+                this.setJsonAttributeKeyValueArr(currAttrs, "network", attrObj, "Network");
+                this.setJsonAttributeKeyValueArr(currAttrs, "asn", attrObj, "Autonomous System Number");
+                this.setJsonAttributeKeyValueArr(currAttrs, "as_owner", attrObj, "Autonomous System Label");
+                this.setJsonAttributeKeyValueArr(currAttrs, "regional_internet_registry", attrObj, "Regional Internet Registry");
+                this.setJsonAttributeKeyValueArr(currAttrs, "country", attrObj, "Country");
+                this.setJsonAttributeKeyValueArr(currAttrs, "continent", attrObj, "Continent");
+                this.addToHtmlContentArr(htmlContentArr, this.HTMLUtils.getSectionHtml("Basic Properties", attrObj));
+                this.addToHtmlContentArr(htmlContentArr, this.getLastAnalysisResultsHtml(currAttrs.last_analysis_results));
+                this.addToHtmlContentArr(htmlContentArr, this.getWhoIsSectionHtml(currAttrs.whois));
+            } else if (obsType == "e5d26b9c43335110baf06e434ab8f2b6") { // Domain Name
+                this.addToHtmlContentArr(htmlContentArr, this.getDomainUrlCategoriesHtml(currAttrs.categories));
+                this.addToHtmlContentArr(htmlContentArr, this.getDomainPopularityHtml(currAttrs.popularity_ranks));
+                this.addToHtmlContentArr(htmlContentArr, this.getLastAnalysisResultsHtml(currAttrs.last_analysis_results));
+                this.addToHtmlContentArr(htmlContentArr, this.getWhoIsSectionHtml(currAttrs.whois));
+                this.addToHtmlContentArr(htmlContentArr, this.getDomainDnsRecordHtml(currAttrs.last_dns_records));
+            } else if (obsType == "0593a3dc43335110baf06e434ab8f2a9") { // URL
+                this.addToHtmlContentArr(htmlContentArr, this.getDomainUrlCategoriesHtml(currAttrs.categories));
+
+                var historyObj = [];
+                this.setJsonAttributeKeyValueArr(currAttrs, "first_submission_date", historyObj, "First Submission", this.getUTCTimeString);
+                this.setJsonAttributeKeyValueArr(currAttrs, "last_submission_date", historyObj, "Last Submission", this.getUTCTimeString);
+                this.setJsonAttributeKeyValueArr(currAttrs, "last_analysis_date", historyObj, "Last Analysis", this.getUTCTimeString);
+                this.addToHtmlContentArr(htmlContentArr, this.HTMLUtils.getSectionHtml("History", historyObj));
+
+                this.addToHtmlContentArr(htmlContentArr, this.getLastAnalysisResultsHtml(currAttrs.last_analysis_results));
+
+                if (currAttrs.hasOwnProperty("redirection_chain") && currAttrs.redirection_chain.length > 0) {
+                    var redirectionArr = [];
+                    for (var idx in currAttrs.redirection_chain) {
+                        redirectionArr.push([currAttrs.redirection_chain[idx]]);
+                    }
+                    this.addToHtmlContentArr(htmlContentArr, this.HTMLUtils.getSectionHtml("Redirection Chain", redirectionArr));
+                }
+
+                var httpRespObj = [];
+                this.setJsonAttributeKeyValueArr(currAttrs, "last_final_url", httpRespObj, "Final URL");
+                this.setJsonAttributeKeyValueArr(currAttrs, "last_http_response_code", httpRespObj, "Status Code");
+                this.setJsonAttributeKeyValueArr(currAttrs, "last_http_response_content_length", httpRespObj, "Body Length(in Bytes)");
+                this.setJsonAttributeKeyValueArr(currAttrs, "last_http_response_content_sha256", httpRespObj, "Body SHA-256");
+                this.addToHtmlContentArr(htmlContentArr, this.HTMLUtils.getSectionHtml("HTTP Response", httpRespObj));
+
+                if (!gs.nil(currAttrs.last_http_response_headers) && (Object.keys(currAttrs.last_http_response_headers).length > 0)) {
+                    var httpRespHeaders = [];
+                    for (var header in currAttrs.last_http_response_headers) {
+                        httpRespHeaders.push([header, currAttrs.last_http_response_headers[header]]);
+                    }
+                    this.addToHtmlContentArr(htmlContentArr, this.HTMLUtils.getSectionHtml("HTTP Response Headers", httpRespHeaders));
+                }
+            } else if (obsType == "eaa4a31043735110baf06e434ab8f26f" || obsType == "3db4a31043735110baf06e434ab8f2ac" || obsType == "08a4a31043735110baf06e434ab8f2ee") { // MD5 / SHA-1 / SHA-256 Hash
+                var attrObj = [];
+                this.setJsonAttributeKeyValueArr(currAttrs, "md5", attrObj, "MD5");
+                this.setJsonAttributeKeyValueArr(currAttrs, "sha1", attrObj, "SHA-1");
+                this.setJsonAttributeKeyValueArr(currAttrs, "sha256", attrObj, "SHA-256");
+                this.setJsonAttributeKeyValueArr(currAttrs, "vhash", attrObj, "Vhash");
+                this.setJsonAttributeKeyValueArr(currAttrs, "authentihash", attrObj, "Authentihash");
+                this.setJsonAttributeKeyValueArr(currAttrs, "tlsh", attrObj, "TLSH");
+                this.setJsonAttributeKeyValueArr(currAttrs, "ssdeep", attrObj, "SSDEEP");
+                this.setJsonAttributeKeyValueArr(currAttrs, "type_description", attrObj, "File Type");
+                this.setJsonAttributeKeyValueArr(currAttrs, "magic", attrObj, "Magic");
+                if (currAttrs.hasOwnProperty("trid") && (currAttrs.trid.length > 0)) {
+                    var trIdStringArr = [];
+                    for (var i = 0; i < currAttrs.trid.length; i++) {
+                        trIdStringArr.push(currAttrs.trid[i].file_type + "(" + currAttrs.trid[i].probability + "%)");
+                    }
+                    attrObj.push([
+                        "TrID",
+                        trIdStringArr.join(" | ")
+                    ]);
+                }
+
+                if (currAttrs.hasOwnProperty("detectiteasy")) {
+                    var dieStringArr = [currAttrs.detectiteasy.filetype];
+                    for (var i = 0; i < currAttrs.detectiteasy.values.length; i++) {
+                        var currValue = currAttrs.detectiteasy.values[i];
+                        var valStrArr = [];
+                        if (currValue.hasOwnProperty("type")) {
+                            valStrArr.push(currValue.type + ":");
+                        }
+                        if (currValue.hasOwnProperty("name")) {
+                            valStrArr.push(currValue["name"]);
+                        }
+                        if (currValue.hasOwnProperty("version")) {
+                            valStrArr.push("(" + currValue["version"] + ")");
+                        }
+                        if (currValue.hasOwnProperty("info")) {
+                            valStrArr.push("[" + currValue["info"] + "]");
+                        }
+                        dieStringArr.push(valStrArr.join(" "));
+                    }
+                    attrObj.push([
+                        "DetectItEasy",
+                        dieStringArr.join(" | ")
+                    ]);
+                }
+                this.setJsonAttributeKeyValueArr(currAttrs, "size", attrObj, "File size(in Bytes)");
+                this.addToHtmlContentArr(htmlContentArr, this.HTMLUtils.getSectionHtml("Basic Properties", attrObj));
+
+                var historyObj = [];
+                this.setJsonAttributeKeyValueArr(currAttrs, "creation_date", historyObj, "Creation Time", this.getUTCTimeString);
+                this.setJsonAttributeKeyValueArr(currAttrs, "first_submission_date", historyObj, "First Submission", this.getUTCTimeString);
+                this.setJsonAttributeKeyValueArr(currAttrs, "last_submission_date", historyObj, "Last Submission", this.getUTCTimeString);
+                this.setJsonAttributeKeyValueArr(currAttrs, "last_analysis_date", historyObj, "Last Analysis", this.getUTCTimeString);
+                this.addToHtmlContentArr(htmlContentArr, this.HTMLUtils.getSectionHtml("History", historyObj));
+
+                this.addToHtmlContentArr(htmlContentArr, this.getLastAnalysisResultsHtml(currAttrs.last_analysis_results));
+
+                if (!gs.nil(currAttrs.names) && (Object.keys(currAttrs.names).length > 0)) {
+                    var namesArr = [];
+                    for (var idx in currAttrs.names) {
+                        namesArr.push([currAttrs.names[idx]]);
+                    }
+                    this.addToHtmlContentArr(htmlContentArr, this.HTMLUtils.getSectionHtml("Names", httpRespHeaders));
+                }
+            }
+
+            if (htmlContentArr.length > 0) {
+                return htmlHeader + htmlContentArr.join("<br/>") + "</body>";
+            }
+            return "";
+        } catch (ex) {
+            gs.error("TISC INT VT: Exception occured while generating raw payload html for virustotal lookup result for observable({0}): {1}", [observableSysId, ex]);
+            return "";
+        }
+    },
+
+    type: 'StairwellHtmlUtils'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2025-01-21 00:16:50</sys_created_on>
+        <sys_id>d0169754831b561041a29b55eeaad390</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>StairwellHtmlUtils</sys_name>
+        <sys_package display_value="Stairwell Integration for Threat Intelligence Security Centre" source="x_1598807_stairwel">96fd6b1b8387121041a29b55eeaad3e9</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="Stairwell Integration for Threat Intelligence Security Centre">96fd6b1b8387121041a29b55eeaad3e9</sys_scope>
+        <sys_update_name>sys_script_include_d0169754831b561041a29b55eeaad390</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2025-01-21 00:21:29</sys_updated_on>
+    </sys_script_include>
+    <sys_es_latest_script action="INSERT_OR_UPDATE">
+        <id>d0169754831b561041a29b55eeaad390</id>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2025-01-21 00:16:50</sys_created_on>
+        <sys_id>3a16531c831b561041a29b55eeaad385</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2025-01-21 00:16:50</sys_updated_on>
+        <table>sys_script_include</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
+</record_update>

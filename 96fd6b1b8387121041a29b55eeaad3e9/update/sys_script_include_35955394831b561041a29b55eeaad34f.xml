@@ -1,0 +1,422 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_1598807_stairwel.StairwellThreatLookupImplementation</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <mobile_callable>false</mobile_callable>
+        <name>StairwellThreatLookupImplementation</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[var StairwellThreatLookupImplementation = Class.create();
+StairwellThreatLookupImplementation.prototype = {
+    _JSON: new global.JSON(),
+    JSONG: sn_sec_cmn.JSONGlide,
+
+    _INTEGRATION_ITEM_CONFIG: 'sn_sec_tisc_enrichment_integration_configuration',
+    _SN_SEC_TISC_OBSERVABLE: 'sn_sec_tisc_observable',
+    _SN_SEC_TISC_OBSERVABLE_TYPE: 'sn_sec_tisc_observable_type',
+    _SN_SEC_CMN_CAPABILITY_IMPLEMENTATION: 'sn_sec_cmn_capability_implementation',
+    _SN_SEC_CMN_CAPABILITY_IMPLEMENTATION_EXECUTION: 'sn_sec_cmn_capability_implementation_execution',
+    _SN_SEC_TISC_LOOKUP_RESULT: 'sn_sec_tisc_lookup_result',
+
+    // _API_KEY: null,
+    _DOMAIN_ID: 'global',
+    _SOURCE_ENGINE: 'Stairwell API',
+    _SOURCE_ENGINE_VERSION: 'v1',
+    _INTEGRATION_ITEM_ID: null,
+    _ENRICHMENT_INTEGRATION_ITEM_ID: null,
+
+    // Cap Impl Exec States;
+    _COMPLETE: "COMPLETE",
+    _WAITING: "WAITING",
+    _ERROR: "ERROR",
+    _IN_PROGRESS: "IN_PROGRESS",
+
+    _FILE_LOOKUP_REQUEST: "Stairwell Lookup File - V1",
+    _GET_LOOKUP_REQUEST: "Stairwell Lookup",
+
+    _URL_TYPE: 'URL',
+    _IPv4_TYPE: 'IPv4',
+    _IPv6_TYPE: 'IPv6',
+    _HASH_TYPE: 'HASH',
+    _DOMAIN_TYPE: "Domain Name", // TODO: is this required?
+
+    _DOC_LINK: "https://docs.stairwell.com/",
+
+    _OBS_TYPE_LOOKUP_TYPE_MAPPING: {
+        "0593a3dc43335110baf06e434ab8f2a9": 'URL',
+        "6d43eb9c43335110baf06e434ab8f2ee": 'IPv4',
+        "725323dc43335110baf06e434ab8f278": 'IPv6',
+        "eaa4a31043735110baf06e434ab8f26f": 'HASH', //SHA1 hash
+        "3db4a31043735110baf06e434ab8f2ac": 'HASH', //SHA256 hash
+        "08a4a31043735110baf06e434ab8f2ee": 'HASH', //MD5 hash
+        "e5d26b9c43335110baf06e434ab8f2b6": 'Domain Name'
+    },
+
+    initialize: function() {
+        this.VTHtmlUtil = new StairwellHtmlUtils(); // TODO: is this used and should it be renamed?
+    },
+
+    addInitialConfiguration: function(capImplExecGr, domainId) {
+        if (!gs.nil(domainId)) // TODO: is this needed?
+            this._DOMAIN_ID = domainId;
+
+
+        if (gs.nil(capImplExecGr)) {
+            gs.error("{0} script include needs to be initialized with an cap impl exec Id", [this._SOURCE_ENGINE]);
+            return;
+        }
+
+        var resp = {};
+
+        var capImplGr = new GlideRecord(this._SN_SEC_CMN_CAPABILITY_IMPLEMENTATION);
+
+        if (capImplGr.get(capImplExecGr.getValue("capability_implementation"))) {
+
+            this._INTEGRATION_ITEM_ID = capImplGr.getValue("integration");
+
+
+        } else {
+            var message = gs.getMessage("integration_id_not_found", [this._SOURCE_ENGINE, capImplExecGr.getValue("capability_implementation")]);
+            gs.error("Error: {0} script include needs to be initialized with an integration Id {1}", [this._SOURCE_ENGINE, capImplExecGr.getValue("capability_implementation")]);
+            resp.errorMessage = message;
+            return resp;
+        }
+
+        var enrIntGr = new GlideRecord("sn_sec_tisc_enrichment_integration");
+        enrIntGr.addQuery("security_integration_item", this._INTEGRATION_ITEM_ID);
+        enrIntGr.query();
+        var enrIntSysId = "";
+        if (enrIntGr.next()) {
+            enrIntSysId = enrIntGr.getUniqueValue();
+        }
+
+        this._ENRICHMENT_INTEGRATION_ITEM_ID = enrIntSysId;
+
+        var configData = new sn_sec_tisc.EnrichmentIntegrationUtils().getConfigurationParameters(enrIntSysId);
+
+        // this._API_KEY = configData.api_key.value;
+
+        // if (gs.nil(this._API_KEY)) {
+        //     var message = gs.getMessage("api_key_not_found", [this._INTEGRATION_ITEM_ID]);
+        //     gs.error("Error: Stairwell Integration script include cannot locate API key for integration with Id {0}", [this._INTEGRATION_ITEM_ID]);
+        //     resp.errorMessage = message;
+        //     return resp;
+        // }
+        resp.successMessage = "Validation Success";
+        return resp;
+    },
+
+    performLookup: function(capImplExecGr, observableGr) {
+        gs.debug("Invoking performLookup with params {0} {1} ", [this.JSONG.stringify(capImplExecGr), this.JSONG.stringify(observableGr)]);
+
+        var responseJSON = {};
+
+        if (gs.nil(observableGr))
+            return responseJSON;
+
+        var message = "";
+        var lookupType;
+
+        var obsType = observableGr.getValue('type');
+        var gr = new GlideRecord(this._SN_SEC_TISC_OBSERVABLE_TYPE);
+        if (gr.get(obsType)) {
+            lookupType = this._OBS_TYPE_LOOKUP_TYPE_MAPPING[obsType + ''];
+        }
+
+
+
+        if (!gs.nil(lookupType)) {
+            var restRequest = new sn_ws.RESTMessageV2(this._GET_LOOKUP_REQUEST, "GET");
+            // restRequest.setRequestHeader("x-apikey", this._API_KEY);
+            switch (lookupType) {
+                case this._IPv4_TYPE: {
+                    restRequest.setEndpoint(restRequest.getEndpoint() + "ipAddresses/" + observableGr.getValue("value") + "/metadata");
+                    responseJSON = this._sendLookupRequest(capImplExecGr, restRequest, observableGr);
+                    break;
+                }
+                case this._IPv6_TYPE: {
+                    restRequest.setEndpoint(restRequest.getEndpoint() + "ipAddresses/" + observableGr.getValue("value") + "/metadata");
+                    responseJSON = this._sendLookupRequest(capImplExecGr, restRequest, observableGr);
+                    break;
+                }
+                // case this._DOMAIN_TYPE: {
+                //     restRequest.setEndpoint(restRequest.getEndpoint() + "domains/" + observableGr.getValue("value"));
+                //     responseJSON = this._sendLookupRequest(capImplExecGr, restRequest, observableGr);
+                //     break;
+                // }
+                case this._HASH_TYPE: {
+                    restRequest.setEndpoint(restRequest.getEndpoint() + "generateRunToGround:generate?objectIds=" + observableGr.getValue("value"));
+                    responseJSON = this._sendLookupRequest(capImplExecGr, restRequest, observableGr);
+                    break;
+                }
+                case this._URL_TYPE: {
+                    // Base64 Encode and remove trailing padding ==
+                    var url = gs.base64Encode(observableGr.getValue("value"));
+                    url = url.replace(/\+/g, '-').replace(/\//g, '_').replace(/\=+$/, '');
+
+                    restRequest.setEndpoint(restRequest.getEndpoint() + "hostnames/" + url + "/metadata");
+                    responseJSON = this._sendLookupRequest(capImplExecGr, restRequest, observableGr);
+                    break;
+                }
+                default: {
+                    message = gs.getMessage("unsupported_observable_type", [lookupType, observableGr.getValue("value")]);
+                }
+            }
+
+        } else {
+            message = gs.getMessage("observable_type_not_found", [observableGr.getValue("value")]);
+            responseJSON.error = {
+                "errorMessage": message
+            };
+        }
+
+        if (responseJSON.hasOwnProperty("contents"))
+            responseJSON.contents = this._JSON.decode(responseJSON.contents);
+
+        // Store the output of the request.
+        var response = JSON.stringify(responseJSON);
+
+        return response;
+    },
+
+    processObjectReport: function(capImplExecGr, observableGr, results, analysisReportId) {
+
+        gs.debug("Invoking processObjectReport with params {0} {1} {2} {3}", [this.JSONG.stringify(capImplExecGr), this.JSONG.stringify(observableGr), results, analysisReportId]);
+
+        var resp = {};
+
+        var statusMessage = null;
+
+        if (gs.nil(results)) {
+            statusMessage = gs.getMessage("no_result", [results]);
+            this._createLookupResult(capImplExecGr.getUniqueValue(), observableGr.getUniqueValue(), observableGr.getValue("type"), results, null, statusMessage, null, null, false);
+            //resp.errorMessage = statusMessage;
+            return resp;
+        }
+        var responseJSON = JSON.parse(results);
+
+        if (responseJSON.hasOwnProperty("error")) {
+            resp.errorMessage = JSON.stringify(responseJSON.error);
+            return resp;
+        }
+
+        var response = responseJSON.contents;
+        var state = null;
+
+        if (response.error) {
+            state = this._ERROR;
+            statusMessage = gs.getMessage("response_error", [response.error.code, response.error.message]);
+            resp.errorMessage = statusMessage;
+
+        } else {
+
+            var resultLinkId = response.data.id;
+
+            // For GETS requests use last_analysis_results otherwise try analysis use results
+            var scans = !gs.nil(response.data.attributes.last_analysis_results) ? response.data.attributes.last_analysis_results : response.data.attributes.results;
+
+
+            var scanCountTotal = 0;
+            var scanCountFail = 0;
+            var engineList = "";
+            if (!gs.nil(scans) && Object.keys(scans).length > 0) {
+                var details = [];
+                for (var engine in scans) {
+                    if (scans.hasOwnProperty(engine)) {
+                        ++scanCountTotal;
+
+                        var isMalicious = false;
+                        if (scans[engine]['category'] === 'malicious') {
+                            ++scanCountFail;
+                            if (engineList)
+                                engineList += ", ";
+                            engineList += engine;
+                            isMalicious = true;
+                        }
+
+                        var value = scans[engine]['result'];
+                        value = value === 'null' ? null : value;
+                        var maliciousString = isMalicious ? 'malicious' : 'not malicious';
+                        details.push(gs.getMessage("engine_deemed_observable", [engine, maliciousString, gs.nil(value) ? '' : value]));
+                    }
+                }
+
+
+                var resultMsg = gs.getMessage("malicious_observable", [scanCountFail + "", gs.nil(engineList) ? 'none' : engineList]);
+
+                this._createLookupResult(capImplExecGr.getUniqueValue(), observableGr.getUniqueValue(), observableGr.getValue("type"), responseJSON.contents, null, details.join('\n'), resultMsg, this._getExternalLink(observableGr, resultLinkId), scanCountFail > 0);
+
+            } else {
+
+                var emptyMsg = gs.getMessage("observable_not_detected", [resultLinkId]);
+                this._createLookupResult(capImplExecGr.getUniqueValue(), observableGr.getUniqueValue(), observableGr.getValue("type"), responseJSON.contents, null, emptyMsg, null, this._getExternalLink(observableGr, resultLinkId), false);
+
+            }
+
+            statusMessage = gs.getMessage("possible_threat", [scanCountFail + "", scanCountTotal + "", engineList]);
+            statusMessage += gs.getMessage("link_to_result", [resultLinkId]);
+
+            resp.statusMessage = statusMessage;
+        }
+        return resp;
+    },
+
+    _sendLookupRequest: function(capImplExecGr, restRequest, observableGr) {
+
+        gs.debug("Invoking _sendLookupRequest with params {0} {1} {2}", [this.JSONG.stringify(capImplExecGr), this.JSONG.stringify(restRequest), this.JSONG.stringify(observableGr)]);
+
+
+        var message = "";
+        var responseJSON = {
+            "contentType": "json"
+        };
+        var resp = {};
+        try {
+
+            restRequest.setHttpTimeout(parseInt(gs.getProperty('sn_sec_tisc_vt.set_timeout', 300000)));
+            var restResponse = restRequest.execute();
+
+
+            var responseBody = restResponse.getBody();
+            var httpStatus = restResponse.getStatusCode();
+
+            responseJSON.contents = responseBody;
+            resp.code = httpStatus;
+
+            if (httpStatus != "200") {
+
+
+                var state = this._ERROR;
+                message = gs.getMessage("unsuccessful_response", [httpStatus]);
+
+                // Results not ready:  NotFoundError 404 The requested resource was not found.
+                if (httpStatus == "404") {
+                    message = gs.getMessage("resource_not_found", [observableGr.getValue("value"), httpStatus, restRequest.getEndpoint()]);
+
+                }
+                resp.message = this._JSON.encode(message);
+                responseJSON.error = resp;
+
+            } else {
+
+                var responseBodyJSON = JSON.parse(responseBody);
+                if (responseBodyJSON.hasOwnProperty("error")) {
+
+                    resp.message = responseBodyJSON.error.message;
+                    resp.code = responseBodyJSON.error.code;
+                    responseJSON.error = resp;
+
+                }
+            }
+
+        } catch (ex) {
+            gs.error("Exception occured at _sendLookupRequest: ", ex);
+            resp.code = ex.name;
+            resp.message = this._JSON.encode(ex.message);
+            responseJSON.error = resp;
+        }
+        return responseJSON;
+    },
+
+    _createLookupResult: function(capImplExecId, observableId, obsType, rawEngineResult, engine, details, value, externalLink, isMalicious) {
+
+        gs.debug("Invoking _createLookupResult with params {0} {1} {2} {3} {4} {5} {6}", [capImplExecId, observableId, rawEngineResult, details, value, externalLink, isMalicious]);
+
+
+        var lookUpResultsGr = new GlideRecord(this._SN_SEC_TISC_LOOKUP_RESULT);
+        lookUpResultsGr.initialize();
+        lookUpResultsGr.setValue('observable', observableId);
+        lookUpResultsGr.setValue('source_engine', !gs.nil(engine) ? engine : this._SOURCE_ENGINE);
+        lookUpResultsGr.setValue('source_engine_version', !gs.nil(engine) ? null : this._SOURCE_ENGINE_VERSION);
+        lookUpResultsGr.setValue('integration', this._ENRICHMENT_INTEGRATION_ITEM_ID);
+        // lookUpResultsGr.setValue('sys_domain', this._DOMAIN_ID);
+        if (!gs.nil(externalLink))
+            lookUpResultsGr.setValue('external_link', externalLink);
+
+        lookUpResultsGr.setValue('details', details);
+        lookUpResultsGr.setValue('result', value);
+        lookUpResultsGr.setValue('raw_data', JSON.stringify(rawEngineResult));
+        lookUpResultsGr.setValue("raw_data_html", new StairwellHtmlUtils().getRawPayloadHTML(rawEngineResult, obsType, observableId));
+        return lookUpResultsGr.insert();
+    },
+
+    isValidClass: function() {
+        // return !gs.nil(this._ENRICHMENT_INTEGRATION_ITEM_ID) && !gs.nil(this._API_KEY);
+        return !gs.nil(this._ENRICHMENT_INTEGRATION_ITEM_ID);
+    },
+
+    _getExternalLink: function(obsGr, resultLinkId) {
+        gs.debug("Invoking _getExternalLink with params {0} {1}", [this.JSONG.stringify(obsGr), resultLinkId]);
+        var VTLink = null;
+        var lookupType;
+
+        var obsType = obsGr.getValue('type');
+        var gr = new GlideRecord(this._SN_SEC_TISC_OBSERVABLE_TYPE);
+        if (gr.get(obsType)) {
+            lookupType = this._OBS_TYPE_LOOKUP_TYPE_MAPPING[obsType + ''];
+        }
+
+        // TODO: this would be code to look up the threat using the web UI instead of the API. I don't know if Stairwell supports this.
+        if (!gs.nil(lookupType)) {
+            switch (lookupType) {
+                case this._IPv4_TYPE: {
+                    if (/^[0-9.:a-fA-F]*$/.test(obsGr.getValue('value')))
+                        VTLink = this._DOC_LINK + "en/ip-address/" + obsGr.getValue('value') + "/information/";
+                    break;
+                }
+                case this._IPv6_TYPE: {
+                    if (/^[0-9.:a-fA-F]*$/.test(obsGr.getValue('value')))
+                        VTLink = this._DOC_LINK + "en/ip-address/" + obsGr.getValue('value') + "/information/";
+                    break;
+                }
+                case this._DOMAIN_TYPE: {
+                    VTLink = this._DOC_LINK + "gui/url/" + resultLinkId + "/detection";
+                    break;
+                }
+                case this._HASH_TYPE: {
+                    VTLink = this._DOC_LINK + "gui/file/" + resultLinkId + "/detection";
+                    break;
+                }
+                case this._URL_TYPE: {
+                    VTLink = this._DOC_LINK + "gui/url/" + resultLinkId + "/detection";
+                    break;
+                }
+                default: {
+
+                }
+            }
+        }
+
+        return VTLink;
+    },
+
+    type: 'StairwellThreatLookupImplementation'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2025-01-21 00:15:46</sys_created_on>
+        <sys_id>35955394831b561041a29b55eeaad34f</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>StairwellThreatLookupImplementation</sys_name>
+        <sys_package display_value="Stairwell Integration for Threat Intelligence Security Centre" source="x_1598807_stairwel">96fd6b1b8387121041a29b55eeaad3e9</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="Stairwell Integration for Threat Intelligence Security Centre">96fd6b1b8387121041a29b55eeaad3e9</sys_scope>
+        <sys_update_name>sys_script_include_35955394831b561041a29b55eeaad34f</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2025-01-21 00:15:46</sys_updated_on>
+    </sys_script_include>
+    <sys_es_latest_script action="INSERT_OR_UPDATE">
+        <id>35955394831b561041a29b55eeaad34f</id>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2025-01-21 00:15:45</sys_created_on>
+        <sys_id>dbd5d7d8831b561041a29b55eeaad35e</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2025-01-21 00:15:45</sys_updated_on>
+        <table>sys_script_include</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
+</record_update>

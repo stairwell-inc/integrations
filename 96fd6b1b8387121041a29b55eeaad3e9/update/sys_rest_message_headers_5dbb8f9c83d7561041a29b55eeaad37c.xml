@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_rest_message_headers">
+    <sys_rest_message_headers action="INSERT_OR_UPDATE">
+        <name>accept</name>
+        <rest_message display_value="Stairwell Lookup">0d4acf9c8397561041a29b55eeaad3b9</rest_message>
+        <sys_class_name>sys_rest_message_headers</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2025-01-20 23:53:33</sys_created_on>
+        <sys_id>5dbb8f9c83d7561041a29b55eeaad37c</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>accept</sys_name>
+        <sys_package display_value="Stairwell Integration for Threat Intelligence Security Centre" source="x_1598807_stairwel">96fd6b1b8387121041a29b55eeaad3e9</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="Stairwell Integration for Threat Intelligence Security Centre">96fd6b1b8387121041a29b55eeaad3e9</sys_scope>
+        <sys_update_name>sys_rest_message_headers_5dbb8f9c83d7561041a29b55eeaad37c</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2025-01-20 23:53:33</sys_updated_on>
+        <value>application/json</value>
+    </sys_rest_message_headers>
+</record_update>
