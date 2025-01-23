@@ -43,7 +43,7 @@ StairwellThreatLookupImplementation.prototype = {
     _HASH_TYPE: 'HASH',
     _DOMAIN_TYPE: "Domain Name", // TODO: is this required?
 
-    _DOC_LINK: "https://docs.stairwell.com/",
+    _DOC_LINK: "https://app.stairwell.com/search?object-matches-query=",
 
     _OBS_TYPE_LOOKUP_TYPE_MAPPING: {
         "0593a3dc43335110baf06e434ab8f2a9": 'URL',
@@ -303,10 +303,10 @@ StairwellThreatLookupImplementation.prototype = {
             } else {
 
                 var responseBodyJSON = JSON.parse(responseBody);
-                if (responseBodyJSON.hasOwnProperty("error")) {
+                if (responseBodyJSON.hasOwnProperty("code")) {
 
-                    resp.message = responseBodyJSON.error.message;
-                    resp.code = responseBodyJSON.error.code;
+                    resp.message = responseBodyJSON.message;
+                    resp.code = responseBodyJSON.code;
                     responseJSON.error = resp;
 
                 }
@@ -359,33 +359,32 @@ StairwellThreatLookupImplementation.prototype = {
             lookupType = this._OBS_TYPE_LOOKUP_TYPE_MAPPING[obsType + ''];
         }
 
-        // TODO: this would be code to look up the threat using the web UI instead of the API. I don't know if Stairwell supports this.
         if (!gs.nil(lookupType)) {
             switch (lookupType) {
                 case this._IPv4_TYPE: {
                     if (/^[0-9.:a-fA-F]*$/.test(obsGr.getValue('value')))
-                        VTLink = this._DOC_LINK + "en/ip-address/" + obsGr.getValue('value') + "/information/";
+                        VTLink = this._DOC_LINK + gs.base64Encode('net.ip == "' + observableGr.getValue("value") + '"');
                     break;
                 }
                 case this._IPv6_TYPE: {
                     if (/^[0-9.:a-fA-F]*$/.test(obsGr.getValue('value')))
-                        VTLink = this._DOC_LINK + "en/ip-address/" + obsGr.getValue('value') + "/information/";
+                        VTLink = this._DOC_LINK + gs.base64Encode('net.ip == "' + observableGr.getValue("value") + '"');
                     break;
                 }
-                case this._DOMAIN_TYPE: {
-                    VTLink = this._DOC_LINK + "gui/url/" + resultLinkId + "/detection";
-                    break;
-                }
-                case this._HASH_TYPE: {
-                    VTLink = this._DOC_LINK + "gui/file/" + resultLinkId + "/detection";
-                    break;
+                // case this._DOMAIN_TYPE: {
+                //     VTLink = this._DOC_LINK + "gui/url/" + resultLinkId + "/detection";
+                //     break;
+                // }
+                case this._HASH_TYPE: { // TODO: should this be split into SHA1, SHA256 and MD5
+                    VTLink = this._DOC_LINK + gs.base64Encode('object.sha256 == "' + observableGr.getValue("value") + '"');
+                break;
                 }
                 case this._URL_TYPE: {
-                    VTLink = this._DOC_LINK + "gui/url/" + resultLinkId + "/detection";
-                    break;
+                    VTLink = this._DOC_LINK + gs.base64Encode('net.hostname == "' + observableGr.getValue("value") + '"');
+                break;
                 }
                 default: {
-
+                    // TODO: do we need to handle filenames too?
                 }
             }
         }
@@ -399,14 +398,14 @@ StairwellThreatLookupImplementation.prototype = {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2025-01-21 00:15:46</sys_created_on>
         <sys_id>35955394831b561041a29b55eeaad34f</sys_id>
-        <sys_mod_count>0</sys_mod_count>
+        <sys_mod_count>1</sys_mod_count>
         <sys_name>StairwellThreatLookupImplementation</sys_name>
         <sys_package display_value="Stairwell Integration for Threat Intelligence Security Centre" source="x_1598807_stairwel">96fd6b1b8387121041a29b55eeaad3e9</sys_package>
         <sys_policy/>
         <sys_scope display_value="Stairwell Integration for Threat Intelligence Security Centre">96fd6b1b8387121041a29b55eeaad3e9</sys_scope>
         <sys_update_name>sys_script_include_35955394831b561041a29b55eeaad34f</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2025-01-21 00:15:46</sys_updated_on>
+        <sys_updated_on>2025-01-23 00:06:09</sys_updated_on>
     </sys_script_include>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>35955394831b561041a29b55eeaad34f</id>

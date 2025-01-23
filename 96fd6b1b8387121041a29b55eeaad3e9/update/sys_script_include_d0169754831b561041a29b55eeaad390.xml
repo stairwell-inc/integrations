@@ -241,9 +241,11 @@ StairwellHtmlUtils.prototype = {
                 htmlContentArr.push("<hr>");
             }
 
+            var historyObj = [];
+            var attrObj = [];
 
             if ((obsType == "6d43eb9c43335110baf06e434ab8f2ee") || (obsType == "725323dc43335110baf06e434ab8f278")) { // IPv4 & IPv6
-                var attrObj = [];
+                attrObj = [];
                 this.setJsonAttributeKeyValueArr(currAttrs, "network", attrObj, "Network");
                 this.setJsonAttributeKeyValueArr(currAttrs, "asn", attrObj, "Autonomous System Number");
                 this.setJsonAttributeKeyValueArr(currAttrs, "as_owner", attrObj, "Autonomous System Label");
@@ -262,7 +264,7 @@ StairwellHtmlUtils.prototype = {
             } else if (obsType == "0593a3dc43335110baf06e434ab8f2a9") { // URL
                 this.addToHtmlContentArr(htmlContentArr, this.getDomainUrlCategoriesHtml(currAttrs.categories));
 
-                var historyObj = [];
+                historyObj = [];
                 this.setJsonAttributeKeyValueArr(currAttrs, "first_submission_date", historyObj, "First Submission", this.getUTCTimeString);
                 this.setJsonAttributeKeyValueArr(currAttrs, "last_submission_date", historyObj, "Last Submission", this.getUTCTimeString);
                 this.setJsonAttributeKeyValueArr(currAttrs, "last_analysis_date", historyObj, "Last Analysis", this.getUTCTimeString);
@@ -293,7 +295,7 @@ StairwellHtmlUtils.prototype = {
                     this.addToHtmlContentArr(htmlContentArr, this.HTMLUtils.getSectionHtml("HTTP Response Headers", httpRespHeaders));
                 }
             } else if (obsType == "eaa4a31043735110baf06e434ab8f26f" || obsType == "3db4a31043735110baf06e434ab8f2ac" || obsType == "08a4a31043735110baf06e434ab8f2ee") { // MD5 / SHA-1 / SHA-256 Hash
-                var attrObj = [];
+                attrObj = [];
                 this.setJsonAttributeKeyValueArr(currAttrs, "md5", attrObj, "MD5");
                 this.setJsonAttributeKeyValueArr(currAttrs, "sha1", attrObj, "SHA-1");
                 this.setJsonAttributeKeyValueArr(currAttrs, "sha256", attrObj, "SHA-256");
@@ -341,7 +343,7 @@ StairwellHtmlUtils.prototype = {
                 this.setJsonAttributeKeyValueArr(currAttrs, "size", attrObj, "File size(in Bytes)");
                 this.addToHtmlContentArr(htmlContentArr, this.HTMLUtils.getSectionHtml("Basic Properties", attrObj));
 
-                var historyObj = [];
+                historyObj = [];
                 this.setJsonAttributeKeyValueArr(currAttrs, "creation_date", historyObj, "Creation Time", this.getUTCTimeString);
                 this.setJsonAttributeKeyValueArr(currAttrs, "first_submission_date", historyObj, "First Submission", this.getUTCTimeString);
                 this.setJsonAttributeKeyValueArr(currAttrs, "last_submission_date", historyObj, "Last Submission", this.getUTCTimeString);
@@ -364,7 +366,7 @@ StairwellHtmlUtils.prototype = {
             }
             return "";
         } catch (ex) {
-            gs.error("TISC INT VT: Exception occured while generating raw payload html for virustotal lookup result for observable({0}): {1}", [observableSysId, ex]);
+            gs.error("TISC INT VT: Exception occured while generating raw payload html for stairwell lookup result for observable({0}): {1}", [observableSysId, ex]);
             return "";
         }
     },
@@ -375,14 +377,14 @@ StairwellHtmlUtils.prototype = {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2025-01-21 00:16:50</sys_created_on>
         <sys_id>d0169754831b561041a29b55eeaad390</sys_id>
-        <sys_mod_count>1</sys_mod_count>
+        <sys_mod_count>2</sys_mod_count>
         <sys_name>StairwellHtmlUtils</sys_name>
         <sys_package display_value="Stairwell Integration for Threat Intelligence Security Centre" source="x_1598807_stairwel">96fd6b1b8387121041a29b55eeaad3e9</sys_package>
         <sys_policy/>
         <sys_scope display_value="Stairwell Integration for Threat Intelligence Security Centre">96fd6b1b8387121041a29b55eeaad3e9</sys_scope>
         <sys_update_name>sys_script_include_d0169754831b561041a29b55eeaad390</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2025-01-21 00:21:29</sys_updated_on>
+        <sys_updated_on>2025-01-23 00:36:52</sys_updated_on>
     </sys_script_include>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>d0169754831b561041a29b55eeaad390</id>
