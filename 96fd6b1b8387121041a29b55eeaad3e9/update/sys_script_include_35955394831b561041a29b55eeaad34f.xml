@@ -148,7 +148,7 @@ StairwellThreatLookupImplementation.prototype = {
                 //     break;
                 // }
                 case this._HASH_TYPE: {
-                    restRequest.setEndpoint(restRequest.getEndpoint() + "generateRunToGround:generate?objectIds=" + observableGr.getValue("value"));
+                    restRequest.setEndpoint(restRequest.getEndpoint() + "objects/" + observableGr.getValue("value") + "/metadata");
                     responseJSON = this._sendLookupRequest(capImplExecGr, restRequest, observableGr);
                     break;
                 }
@@ -198,54 +198,45 @@ StairwellThreatLookupImplementation.prototype = {
         }
         var responseJSON = JSON.parse(results);
 
-        if (responseJSON.hasOwnProperty("error")) {
-            resp.errorMessage = JSON.stringify(responseJSON.error);
-            return resp;
-        }
+        // TODO: I don't think an error property is returned
+        // if (responseJSON.hasOwnProperty("error")) {
+        //     resp.errorMessage = JSON.stringify(responseJSON.error);
+        //     return resp;
+        // }
 
         var response = responseJSON.contents;
         var state = null;
 
-        if (response.error) {
+        if (response.code) {
             state = this._ERROR;
-            statusMessage = gs.getMessage("response_error", [response.error.code, response.error.message]);
+            statusMessage = gs.getMessage("response_error", [response.code, response.message]);
             resp.errorMessage = statusMessage;
 
         } else {
 
-            var resultLinkId = response.data.id;
+            var resultLinkId = response.name;
 
-            // For GETS requests use last_analysis_results otherwise try analysis use results
-            var scans = !gs.nil(response.data.attributes.last_analysis_results) ? response.data.attributes.last_analysis_results : response.data.attributes.results;
+            // For GETS requests use malEval
+            var scans = response.malEval;
 
 
-            var scanCountTotal = 0;
-            var scanCountFail = 0;
-            var engineList = "";
-            if (!gs.nil(scans) && Object.keys(scans).length > 0) {
+            if (!gs.nil(scans) && Object.keys(scans).length > 0) { // TODO: Will this ensure that "malEval.labels" is not empty?
                 var details = [];
-                for (var engine in scans) {
-                    if (scans.hasOwnProperty(engine)) {
-                        ++scanCountTotal;
+                var isMalicious = false;
+                if (scans.probabilityBucket == 'PROBABILITY_VERY_HIGH' || scans.probabilityBucket == 'PROBABILITY_HIGH') {
+                    isMalicious = true;
+                }
+                var maliciousString = isMalicious ? 'malicious' : 'not malicious';
 
-                        var isMalicious = false;
-                        if (scans[engine]['category'] === 'malicious') {
-                            ++scanCountFail;
-                            if (engineList)
-                                engineList += ", ";
-                            engineList += engine;
-                            isMalicious = true;
-                        }
-
-                        var value = scans[engine]['result'];
-                        value = value === 'null' ? null : value;
-                        var maliciousString = isMalicious ? 'malicious' : 'not malicious';
-                        details.push(gs.getMessage("engine_deemed_observable", [engine, maliciousString, gs.nil(value) ? '' : value]));
+                if (scans.hasOwnProperty(labels)) {
+                    var labels = scans.labels;
+                    for (var label in labels) {
+                        var agent = agent == 'null' ? null : label;
+                        details.push(gs.getMessage("malEval_observable", [agent, maliciousString]))
                     }
                 }
 
-
-                var resultMsg = gs.getMessage("malicious_observable", [scanCountFail + "", gs.nil(engineList) ? 'none' : engineList]);
+                var resultMsg = gs.getMessage("malicious_observable", ['none', 'none']);
 
                 this._createLookupResult(capImplExecGr.getUniqueValue(), observableGr.getUniqueValue(), observableGr.getValue("type"), responseJSON.contents, null, details.join('\n'), resultMsg, this._getExternalLink(observableGr, resultLinkId), scanCountFail > 0);
 
@@ -256,8 +247,7 @@ StairwellThreatLookupImplementation.prototype = {
 
             }
 
-            statusMessage = gs.getMessage("possible_threat", [scanCountFail + "", scanCountTotal + "", engineList]);
-            statusMessage += gs.getMessage("link_to_result", [resultLinkId]);
+            statusMessage = gs.getMessage("possible_threat");
 
             resp.statusMessage = statusMessage;
         }
@@ -398,14 +388,14 @@ StairwellThreatLookupImplementation.prototype = {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2025-01-21 00:15:46</sys_created_on>
         <sys_id>35955394831b561041a29b55eeaad34f</sys_id>
-        <sys_mod_count>1</sys_mod_count>
+        <sys_mod_count>2</sys_mod_count>
         <sys_name>StairwellThreatLookupImplementation</sys_name>
         <sys_package display_value="Stairwell Integration for Threat Intelligence Security Centre" source="x_1598807_stairwel">96fd6b1b8387121041a29b55eeaad3e9</sys_package>
         <sys_policy/>
         <sys_scope display_value="Stairwell Integration for Threat Intelligence Security Centre">96fd6b1b8387121041a29b55eeaad3e9</sys_scope>
         <sys_update_name>sys_script_include_35955394831b561041a29b55eeaad34f</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2025-01-23 00:06:09</sys_updated_on>
+        <sys_updated_on>2025-01-27 22:49:23</sys_updated_on>
     </sys_script_include>
     <sys_es_latest_script action="INSERT_OR_UPDATE">
         <id>35955394831b561041a29b55eeaad34f</id>
