@@ -20,7 +20,7 @@ objects_api = "objects/"
 ip_api = "ipAddresses/"
 hostname_api = "hostnames/"
 
-dev_api_url = "https://app.stairwell.dev/v1/enrichment/object_event/"
+dev_api_url = "https://app.stairwell.dev/labs/appapi/enrichment/v1/object_event/"
 
 
 def get_encrypted_token(search_command):
