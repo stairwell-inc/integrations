@@ -1,0 +1,4 @@
+bin/splunklib
+stairwell-splunk-app/bin/splunklib
+stairwell-splunk-app/bin/stairwelllib/__pycache__
+stairwell-splunk-app/bin/stairwell-splunk-app.code-workspace
