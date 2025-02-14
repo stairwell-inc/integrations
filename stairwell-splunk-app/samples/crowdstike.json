@@ -1,0 +1,33 @@
+{
+    "aid": "1234567890abcdef",
+    "cid": "abcdef1234567890",
+    "event": {
+      "DetectId": "detection12345",
+      "ProcessStartTime": "2025-02-11T14:30:15Z",
+      "Severity": 50,
+      "Confidence": 90,
+      "Tactic": "Execution",
+      "Technique": "Scripting",
+      "EventType": "ProcessRollup2",
+      "Process": {
+        "FileName": "powershell.exe",
+        "CommandLine": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Public\\malicious.ps1",
+        "SHA256": "0385eeab00e946a302b24a91dea4187c1210597b8e17cd9e2230450f5ece21da",
+        "UserName": "victim-user",
+        "ParentProcess": "cmd.exe",
+        "ParentCommandLine": "cmd.exe /c powershell.exe -NoProfile -ExecutionPolicy Bypass"
+      },
+      "HostInfo": {
+        "ComputerName": "victim-machine",
+        "ExternalIp": "192.168.1.1",
+        "LocalIp": "10.0.0.10",
+        "OSVersion": "Windows 10",
+        "SensorVersion": "6.52.13807.0"
+      }
+    },
+    "timestamp": "2025-02-11T14:30:15.000Z",
+    "source": "crowdstrike",
+    "sourcetype": "crowdstrike:events",
+    "index": "crowdstrike"
+  }
+  

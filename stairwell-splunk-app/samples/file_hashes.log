@@ -1,0 +1,3 @@
+{"timestamp": "2025-02-03T14:30:15.000Z", "filename": "malware.exe", "hash_md5": "c7497366fd0d8c9d72f96e7190632a51", "hash_sha256": "d780134609e2b5c9ec6b75e35c5f6eefcb1527105a584c6fbcff5dee33cebd37"}
+{"timestamp": "2025-02-03T14:30:16.000Z", "filename": "trojan.dll", "hash_md5": "84ba0197920fd3e2b7dfa719fee09d2f", "hash_sha256": "0385eeab00e946a302b24a91dea4187c1210597b8e17cd9e2230450f5ece21da"}
+{"timestamp": "2025-02-03T14:30:17.000Z", "filename": "ransomware.doc", "hash_md5": "9e107d9d372bb6826bd81d3542a419d6", "hash_sha256": "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12"}

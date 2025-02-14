@@ -1,0 +1,27 @@
+[app/ui]
+version = 9.4.0
+modtime = 1738530663.589262000
+
+[app/launcher]
+version = 9.4.0
+modtime = 1738530663.592766000
+
+[app/package/check_for_updates]
+version = 9.4.0
+modtime = 1738530663.594114000
+
+[nav/default]
+access = read : [ * ], write : [ admin, power ]
+export = system
+owner = nobody
+version = 9.4.0
+modtime = 1738530890.867052000
+
+[passwords/credential%3Astairwell_realm%3Aadmin%3A]
+owner = stephenlord
+version = 9.4.0
+modtime = 1739491345.949915000
+
+[app/install]
+version = 9.4.0
+modtime = 1739491346.214587000
