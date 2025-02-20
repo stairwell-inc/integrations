@@ -1,4 +1,19 @@
 // Copyright (C) 2025 Stairwell Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License"): you may
+// not use this file except in compliance with the License. You may obtain
+// a copy of the License found in the LICENSE file in the root directory of
+// this source tree. Also found at:
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+// License for the specific language governing permissions and limitations
+// under the License.
+
+'use strict';
 
 import * as Setup from "./store_secret.js";
 
@@ -6,24 +21,17 @@ define(["react", "splunkjs/splunk"], function(react, splunk_js_sdk){
   const e = react.createElement;
 
   class SetupPage extends react.Component {
-    constructor(props) {
-      super(props);
+    state = {
+      password: '',
+      userId: '',
+      organizationId: ''
+    };
 
-      this.state = {
-        password: '',
-        userId: '',
-        organizationId: ''
-      };
-
-      this.handleChange = this.handleChange.bind(this);
-      this.handleSubmit = this.handleSubmit.bind(this);
+    handleChange = (event) => {
+      this.setState({ [event.target.name]: event.target.value})
     }
 
-    handleChange(event) {
-      this.setState({ ...this.state, [event.target.name]: event.target.value})
-    }
-
-    async handleSubmit(event) {
+    handleSubmit = async (event) => {
       event.preventDefault();
 
       await Setup.perform(splunk_js_sdk, this.state)
