@@ -1,16 +1,32 @@
 # Copyright (C) 2025 Stairwell Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"): you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License found in the LICENSE file in the root directory of
+# this source tree. Also found at:
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
 
+from stairwelllib.stairwellapi import search_stairwell_ip_addresses_api, search_stairwell_object_api, search_stairwell_hostname_api
+from stairwelllib.logging import setup_logging
+from splunklib.searchcommands import dispatch, StreamingCommand, Configuration, Option
 import os
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "splunklib"))
-from splunklib.searchcommands import dispatch, StreamingCommand, Configuration, Option
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "stairwelllib"))
-from stairwelllib.logging import setup_logging
+sys.path.insert(0, os.path.join(
+    os.path.dirname(__file__), "..", "stairwelllib"))
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "stairwelllib"))
-from stairwelllib.stairwellapi import searchStairwellIpAddressesAPI, searchStairwellObjectAPI, searchStairwellHostnameAPI
+sys.path.insert(0, os.path.join(
+    os.path.dirname(__file__), "..", "stairwelllib"))
+
 
 @Configuration()
 class Stairwell(StreamingCommand):
@@ -43,22 +59,25 @@ class Stairwell(StreamingCommand):
             logger.debug(f"record before = {record}")
             if 'ip_field' in locals() and ip_field in record and record[ip_field] != "":
                 # Send request to Stairwell API
-                responseDictionary = searchStairwellIpAddressesAPI(self, logger, record[ip_field])
-                for key, value in responseDictionary.items():
+                response_dictionary = search_stairwell_ip_addresses_api(
+                    self, logger, record[ip_field])
+                for key, value in response_dictionary.items():
                     record[key] = value
 
             elif 'object_field' in locals() and object_field in record and record[object_field] != "":
                 # Send request to Stairwell API
-                responseDictionary = searchStairwellObjectAPI(self, logger, record[object_field])
-                for key, value in responseDictionary.items():
+                response_dictionary = search_stairwell_object_api(
+                    self, logger, record[object_field])
+                for key, value in response_dictionary.items():
                     record[key] = value
 
             elif 'hostname_field' in locals() and hostname_field in record and record[hostname_field] != "":
                 hostname_value = record[hostname_field]
                 # Send request to Stairwell API
-                responseDictionary = searchStairwellHostnameAPI(self, logger, record[hostname_field])
-                for key, value in responseDictionary.items():
-                    record[key] = value               
+                response_dictionary = search_stairwell_hostname_api(
+                    self, logger, record[hostname_field])
+                for key, value in response_dictionary.items():
+                    record[key] = value
 
             logger.debug(f"record after = {record}")
 
@@ -68,5 +87,6 @@ class Stairwell(StreamingCommand):
                 return
 
         logger.info("Stairwell - stream - exit")
+
 
 dispatch(Stairwell, sys.argv, sys.stdin, sys.stdout, __name__)
