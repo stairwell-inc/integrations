@@ -37,6 +37,9 @@ SPLUNK_IP_ADDRESS_ATTRIBUTE = "ipaddress"
 SPLUNK_OBJECT_ATTRIBUTE = "object"
 SPLUNK_HOSTNAME_ATTRIBUTE = "hostname"
 
+CODE_FIELD = 'code'
+MESSAGE_FIELD = 'message'
+
 
 def get_encrypted_token(search_command):
     secrets = search_command.service.storage_passwords
@@ -65,7 +68,7 @@ def search_stairwell_ip_addresses_api(search_command, logger, ip_value):
     response_dictionary = {}
 
     try:
-        response = get_from_api(search_command, logger, api_url)
+        status, response = get_from_api(search_command, logger, api_url)
     except Exception as e:
         response_dictionary["stairwell_error"] = f"Stairwell API error: {e}"
         return response_dictionary
@@ -94,9 +97,16 @@ def search_stairwell_object_api(search_command, logger, object_value):
     response_dictionary = {}
 
     try:
-        response = get_from_api(search_command, logger, api_url)
+        status, response = get_from_api(search_command, logger, api_url)
+        if status != 200:
+            if CODE_FIELD in response and MESSAGE_FIELD in response:
+                code = response.get(CODE_FIELD)
+                message = response.get(MESSAGE_FIELD)
+                response_dictionary["stairwell_status"] = f"Error: {code}, Reason: {message}"
+            return response_dictionary
+
     except Exception as e:
-        response_dictionary["stairwell_error"] = f"Stairwell API error: {e}"
+        response_dictionary["stairwell_status"] = f"Stairwell API error: {e}"
         return response_dictionary
 
     # Set Common Resources
@@ -104,9 +114,12 @@ def search_stairwell_object_api(search_command, logger, object_value):
     response_dictionary["stairwell_resource_type"] = SPLUNK_OBJECT_ATTRIBUTE
     response_dictionary["stairwell_resource_id"] = object_value
     # TODO: waiting for implementation in the API, before these can be completed.
-    # response_dictionary["stairwell_comments"]
+    response_dictionary["stairwell_comments"] = response.get(
+        "commentsMostRecent")
+    # TODO: waiting for implementation in the API, before these can be completed.
     # response_dictionary["stairwell_tags"]
-    # response_dictionary["stairwell_opinions"]
+    response_dictionary["stairwell_opinions"] = response.get(
+        "opinionsMostRecent")
     response_dictionary["stairwell_ai_assessment"] = response.get("summaryAi")
 
     # Set Object specific resources
@@ -122,7 +135,8 @@ def search_stairwell_object_api(search_command, logger, object_value):
     response_dictionary["stairwell_object_mal_eval_probability"] = response.get(
         "verdictMalevalMaliciousProbability")
     # TODO: waiting for implementation in the API, before these can be completed.
-    # response_dictionary["stairwell_object_environments"]
+    response_dictionary["stairwell_object_environments"] = response.get(
+        "environments")
     response_dictionary["stairwell_object_yara_rule_matches"] = response.get(
         "verdictYaraRuleMatches")
     response_dictionary["stairwell_object_network_indicators_ipAddresses"] = response.get(
@@ -159,7 +173,7 @@ def search_stairwell_hostname_api(search_command, logger, hostname_value):
     response_dictionary = {}
 
     try:
-        response = get_from_api(search_command, logger, api_url)
+        _, response = get_from_api(search_command, logger, api_url)
     except Exception as e:
         response_dictionary["stairwell_error"] = f"Stairwell API error: {e}"
         return response_dictionary
@@ -183,22 +197,16 @@ def get_from_api(search_command, logger, api_url):
     logger.debug("Entered get_from_api")
     headers = get_outbound_headers(search_command)
 
-    CODE_FIELD = 'code'
-    MESSAGE_FIELD = 'message'
-
     retry_attempts = 0
     while True:
         try:
-            response = requests.get(api_url, headers=headers)
-            # TODO: need to trap HTTP 404 here
-            decodedResponse = response.json()
             logger.debug(f"Request: {api_url}")
-            logger.debug(f"Response: {decodedResponse}")
-            if CODE_FIELD in decodedResponse and MESSAGE_FIELD in decodedResponse:
-                code = decodedResponse.get(CODE_FIELD)
-                message = decodedResponse.get(MESSAGE_FIELD)
-                raise Exception(f"Error: {code}, Reason: {message}")
-            return decodedResponse
+            response = requests.get(api_url, headers=headers, timeout=10)
+            status = response.status_code
+            logger.debug(f"Response status_code {status}")
+            decoded_response = response.json()
+            logger.debug(f"Response: {decoded_response}")
+            return status, decoded_response
         except urllib.error.HTTPError as e:
             logger.debug(f"get_from_api exception: {e}")
             if (e.code == 429 or e.code == 500) and retry_attempts <= MAX_RETRIES:

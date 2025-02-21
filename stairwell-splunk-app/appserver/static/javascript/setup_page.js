@@ -15,7 +15,7 @@
 
 "use strict";
 
-var app_name = "stairwell-splunk-app";
+const app_name = "stairwell-splunk-app";
 
 require.config({
     paths: {

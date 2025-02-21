@@ -39,7 +39,7 @@ async function reload_splunk_app(
   const splunk_js_sdk_apps = splunk_js_sdk_service.apps();
   await splunk_js_sdk_apps.fetch();
 
-  var current_app = splunk_js_sdk_apps.item(app_name);
+  const current_app = splunk_js_sdk_apps.item(app_name);
   await current_app.fetch();
   await current_app.reload();
 };

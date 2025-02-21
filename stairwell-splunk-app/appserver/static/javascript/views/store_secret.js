@@ -22,9 +22,9 @@ const SECRET_REALM = 'stairwell_realm'
 const SECRET_NAME = 'admin'
 
 export async function perform(splunk_js_sdk, { password, ...properties }) {
-    var app_name = "stairwell-splunk-app";
+    const app_name = "stairwell-splunk-app";
 
-    var application_name_space = {
+    const application_name_space = {
         owner: "nobody",
         app: app_name,
         sharing: "app",
@@ -36,7 +36,7 @@ export async function perform(splunk_js_sdk, { password, ...properties }) {
             application_name_space,
             );
 
-        var storagePasswords = service.storagePasswords();
+        let storagePasswords = service.storagePasswords();
 
         const secrets = {
             "password"       : password,
@@ -72,7 +72,7 @@ export async function perform(splunk_js_sdk, { password, ...properties }) {
 
         await Config.complete_setup(service);
         await Config.reload_splunk_app(service, app_name);    
-        await Config.redirect_to_splunk_app_homepage(app_name);           
+        Config.redirect_to_splunk_app_homepage(app_name);           
           
     } catch (error) {
 

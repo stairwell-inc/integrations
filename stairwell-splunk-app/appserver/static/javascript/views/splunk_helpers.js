@@ -30,7 +30,7 @@ async function update_configuration_file(
   properties,
 ) {
   // Retrieve the accessor used to get a configuration file
-  var splunk_js_sdk_service_configurations = splunk_js_sdk_service.configurations(
+  let splunk_js_sdk_service_configurations = splunk_js_sdk_service.configurations(
       {
           // Name space information not provided
       },
@@ -38,7 +38,7 @@ async function update_configuration_file(
   splunk_js_sdk_service_configurations = await promisify(splunk_js_sdk_service_configurations.fetch)();
 
   // Check for the existence of the configuration file
-  var configuration_file_exist = does_configuration_file_exist(
+  let configuration_file_exist = does_configuration_file_exist(
       splunk_js_sdk_service_configurations,
       configuration_file_name,
   );
@@ -55,7 +55,7 @@ async function update_configuration_file(
   }
 
   // Retrieves the configuration file accessor
-  var configuration_file_accessor = get_configuration_file(
+  let configuration_file_accessor = get_configuration_file(
       splunk_js_sdk_service_configurations,
       configuration_file_name,
   );
@@ -63,7 +63,7 @@ async function update_configuration_file(
 
   // Checks to see if the stanza where the inputs will be
   // stored exist
-  var stanza_exist = does_stanza_exist(
+  let stanza_exist = does_stanza_exist(
       configuration_file_accessor,
       stanza_name,
   );
@@ -76,7 +76,7 @@ async function update_configuration_file(
   configuration_file_accessor = await promisify(configuration_file_accessor.fetch)();
 
   // Retrieves the configuration stanza accessor
-  var configuration_stanza_accessor = get_configuration_file_stanza(
+  let configuration_stanza_accessor = get_configuration_file_stanza(
       configuration_file_accessor,
       stanza_name,
   );
@@ -106,11 +106,11 @@ function does_configuration_file_exist(
   configurations_accessor,
   configuration_file_name,
 ) {
-  var was_configuration_file_found = false;
+  let was_configuration_file_found = false;
 
-  var configuration_files_found = configurations_accessor.list();
-  for (var index = 0; index < configuration_files_found.length; index++) {
-      var configuration_file_name_found =
+  const configuration_files_found = configurations_accessor.list();
+  for (let index = 0; index < configuration_files_found.length; index++) {
+      const configuration_file_name_found =
           configuration_files_found[index].name;
       if (configuration_file_name_found === configuration_file_name) {
           was_configuration_file_found = true;
@@ -125,11 +125,11 @@ function does_stanza_exist(
   configuration_file_accessor,
   stanza_name,
 ) {
-  var was_stanza_found = false;
+  let was_stanza_found = false;
 
-  var stanzas_found = configuration_file_accessor.list();
-  for (var index = 0; index < stanzas_found.length; index++) {
-      var stanza_found = stanzas_found[index].name;
+  const stanzas_found = configuration_file_accessor.list();
+  for (let index = 0; index < stanzas_found.length; index++) {
+      const stanza_found = stanzas_found[index].name;
       if (stanza_found === stanza_name) {
           was_stanza_found = true;
           break;
@@ -143,7 +143,7 @@ function does_stanza_property_exist(
   configuration_stanza_accessor,
   property_name,
 ) {
-  var was_property_found = false;
+  let was_property_found = false;
 
   for (const [key, value] of Object.entries(
       configuration_stanza_accessor.properties(),
@@ -164,7 +164,7 @@ function get_configuration_file(
   configurations_accessor,
   configuration_file_name,
 ) {
-  var configuration_file_accessor = configurations_accessor.item(
+  const configuration_file_accessor = configurations_accessor.item(
       configuration_file_name,
       {
           // Name space information not provided
@@ -178,7 +178,7 @@ function get_configuration_file_stanza(
   configuration_file_accessor,
   configuration_stanza_name,
 ) {
-  var configuration_stanza_accessor = configuration_file_accessor.item(
+  const configuration_stanza_accessor = configuration_file_accessor.item(
       configuration_stanza_name,
       {
           // Name space information not provided
