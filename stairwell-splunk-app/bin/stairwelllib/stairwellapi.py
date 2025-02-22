@@ -13,13 +13,14 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-# Functions for use with the Stairwell API
+"""Functions for use with the Stairwell API"""
 
-import json
-import requests
 import time
-import urllib
+import json
+
 from urllib.error import HTTPError
+import requests
+from http import HTTPStatus
 
 SECRET_REALM = 'stairwell_realm'
 SECRET_NAME = 'admin'
@@ -30,9 +31,11 @@ MAX_RETRIES = 10
 ROOT_API_URL = "https://app.stairwell.com/v1/"
 METADATA_PATH = "/metadata"
 OBJECTS_API = "objects/"
+OBJECT_EVENT_API = "object_event/"
 IP_API = "ipAddresses/"
 HOSTNAME_API = "hostnames/"
-DEV_API_URL = "https://app.stairwell.dev/labs/appapi/enrichment/v1/object_event/"
+HOSTNAME_EVENT_API = "hostname_event/"
+DEV_API_URL = "https://app.stairwell.dev/labs/appapi/enrichment/v1/"
 SPLUNK_IP_ADDRESS_ATTRIBUTE = "ipaddress"
 SPLUNK_OBJECT_ATTRIBUTE = "object"
 SPLUNK_HOSTNAME_ATTRIBUTE = "hostname"
@@ -42,11 +45,13 @@ MESSAGE_FIELD = 'message'
 
 
 def get_encrypted_token(search_command):
+    """Retrieves an app configuration token, comprising password, organizationId, userId """
     secrets = search_command.service.storage_passwords
     return next(secret for secret in secrets if (secret.realm == SECRET_REALM and secret.username == SECRET_NAME)).clear_password
 
 
 def get_outbound_headers(search_command):
+    """Creates required headers in request to Stairwell API"""
     secrets = get_encrypted_token(search_command)
     secrets_json = json.loads(secrets)
     auth_token = secrets_json["password"]
@@ -62,15 +67,19 @@ def get_outbound_headers(search_command):
 
 
 def search_stairwell_ip_addresses_api(search_command, logger, ip_value):
+    """Calls Stairwell API with an IP Address lookup"""
     logger.debug("Entered search_stairwell_ip_addresses_api")
 
     api_url = f"{ROOT_API_URL}{IP_API}{ip_value}{METADATA_PATH}"
     response_dictionary = {}
 
     try:
-        status, response = get_from_api(search_command, logger, api_url)
-    except Exception as e:
-        response_dictionary["stairwell_error"] = f"Stairwell API error: {e}"
+        response = get_from_api(search_command, logger, api_url)
+    except StairwellAPIStatusException as e:
+        response_dictionary["stairwell_status"] = e
+        return response_dictionary
+    except StairwellAPIErrorException as e:
+        response_dictionary["stairwell_error"] = e
         return response_dictionary
 
     # Set Common Resources
@@ -91,22 +100,19 @@ def search_stairwell_ip_addresses_api(search_command, logger, ip_value):
 
 
 def search_stairwell_object_api(search_command, logger, object_value):
+    """Calls Stairwell API with an Object lookup"""
     logger.debug("Entered search_stairwell_object_api")
 
-    api_url = f"{DEV_API_URL}{object_value}"
+    api_url = f"{DEV_API_URL}{OBJECT_EVENT_API}{object_value}"
     response_dictionary = {}
 
     try:
-        status, response = get_from_api(search_command, logger, api_url)
-        if status != 200:
-            if CODE_FIELD in response and MESSAGE_FIELD in response:
-                code = response.get(CODE_FIELD)
-                message = response.get(MESSAGE_FIELD)
-                response_dictionary["stairwell_status"] = f"Error: {code}, Reason: {message}"
-            return response_dictionary
-
-    except Exception as e:
-        response_dictionary["stairwell_status"] = f"Stairwell API error: {e}"
+        response = get_from_api(search_command, logger, api_url)
+    except StairwellAPIStatusException as e:
+        response_dictionary["stairwell_status"] = e
+        return response_dictionary
+    except StairwellAPIErrorException as e:
+        response_dictionary["stairwell_error"] = e
         return response_dictionary
 
     # Set Common Resources
@@ -167,15 +173,19 @@ def search_stairwell_object_api(search_command, logger, object_value):
 
 
 def search_stairwell_hostname_api(search_command, logger, hostname_value):
+    """Calls Stairwell API with a hostname lookup"""
     logger.debug("Entered search_stairwell_hostname_api")
 
-    api_url = f"{ROOT_API_URL}{HOSTNAME_API}{hostname_value}{METADATA_PATH}"
+    api_url = f"{DEV_API_URL}{HOSTNAME_EVENT_API}{hostname_value}"
     response_dictionary = {}
 
     try:
-        _, response = get_from_api(search_command, logger, api_url)
-    except Exception as e:
-        response_dictionary["stairwell_error"] = f"Stairwell API error: {e}"
+        response = get_from_api(search_command, logger, api_url)
+    except StairwellAPIStatusException as e:
+        response_dictionary["stairwell_status"] = e
+        return response_dictionary
+    except StairwellAPIErrorException as e:
+        response_dictionary["stairwell_error"] = e
         return response_dictionary
 
     # Set Common Resources
@@ -183,17 +193,26 @@ def search_stairwell_hostname_api(search_command, logger, hostname_value):
     response_dictionary["stairwell_resource_type"] = SPLUNK_HOSTNAME_ATTRIBUTE
     response_dictionary["stairwell_resource_id"] = hostname_value
     # TODO: waiting for implementation in the API, before these can be completed.
-    # response_dictionary["stairwell_comments"]
+    response_dictionary["stairwell_comments"] = response.get(
+        "commentsMostRecent")
     # response_dictionary["stairwell_tags"]
-    # response_dictionary["stairwell_opinions"]
+    response_dictionary["stairwell_opinions"] = response.get(
+        "opinionsMostRecent")
     # response_dictionary["stairwell_ai_assessment"]
 
     # Set Hostname specific resources
-    response_dictionary["stairwell_hostname"] = response.get("hostname")
+    response_dictionary["stairwell_hostname"] = hostname_value
+    response_dictionary["stairwell_hostname_a_records"] = response.get(
+        "lookupARecords")
+    response_dictionary["stairwell_hostname_aaaa_records"] = response.get(
+        "lookupAaaaRecords")
+    response_dictionary["stairwell_hostname_mx_records"] = response.get(
+        "lookupMxRecords")
     return response_dictionary
 
 
 def get_from_api(search_command, logger, api_url):
+    """Calls an API with provided api_url and handles error responses."""
     logger.debug("Entered get_from_api")
     headers = get_outbound_headers(search_command)
 
@@ -204,18 +223,73 @@ def get_from_api(search_command, logger, api_url):
             response = requests.get(api_url, headers=headers, timeout=10)
             status = response.status_code
             logger.debug(f"Response status_code {status}")
-            decoded_response = response.json()
-            logger.debug(f"Response: {decoded_response}")
-            return status, decoded_response
-        except urllib.error.HTTPError as e:
+            # successful response
+            if status == HTTPStatus.OK:
+                decoded_response = response.json()
+                logger.debug(f"Response: {decoded_response}")
+                return decoded_response
+
+            # handle non successful response
+            retry_attempts = process_error(
+                response, status, retry_attempts, logger)
+
+        except HTTPError as e:
             logger.debug(f"get_from_api exception: {e}")
-            if (e.code == 429 or e.code == 500) and retry_attempts <= MAX_RETRIES:
-                sleep_time = int(response.headers["Retry-After"])
-                if sleep_time <= 0:
-                    raise
-                retry_attempts += 1
-                logger.info(
-                    f"Status_code 429. Attempt {retry_attempts}. Sleeping for {sleep_time}")
-                time.sleep(sleep_time)
-            else:
-                raise
+            retry_attempts = process_error(
+                response, e.code, retry_attempts, logger)
+
+
+def process_error(response, code, retry_attempts, logger):
+    """Provide error handling and retry functionality based on API response"""
+    logger.debug(f"process_error code:{code} \nresponse:{response} ")
+    if code in (HTTPStatus.TOO_MANY_REQUESTS, HTTPStatus.INTERNAL_SERVER_ERROR):
+        # Retry-After response
+        sleep_time = int(response.headers["Retry-After"])
+        if retry_attempts <= MAX_RETRIES and sleep_time > 0:
+            retry_attempts += 1
+            logger.info(
+                f"HTTP: TOO_MANY_REQUESTS. Attempt {retry_attempts}. Sleeping for {sleep_time}")
+            time.sleep(sleep_time)
+            return retry_attempts
+        else:
+            if retry_attempts > MAX_RETRIES:
+                logger.error(
+                    f"HTTP Code {code}. Stairwell API {MAX_RETRIES} retried attempted")
+                raise StairwellAPIErrorException(
+                    f"Stairwell API {MAX_RETRIES} retried attempted", code)
+
+            error_message = f"HTTP: {code}"
+            logger.error(error_message)
+            raise StairwellAPIErrorException(
+                error_message, code)
+    elif code == HTTPStatus.NOT_FOUND:
+        decoded_response = response.json()
+        raise StairwellAPIStatusException(
+            f"HTTP: {code}, Reason: {decoded_response}", code)
+    else:
+        #  Other non successful responses
+        if CODE_FIELD in response and MESSAGE_FIELD in response:
+            code = response.get(CODE_FIELD)
+            message = response.get(MESSAGE_FIELD)
+            raise StairwellAPIStatusException(
+                f"Status: {code}, Reason: {message}", code)
+        raise StairwellAPIErrorException(
+            f"HTTP: {code}", code)
+
+
+class StairwellAPIStatusException(Exception):
+    """Exception used when a Stairwell API request returns an error code"""
+
+    def __init__(self, message, errors):
+        super().__init__(message)
+
+        self.errors = errors
+
+
+class StairwellAPIErrorException(Exception):
+    """Exception used when a Stairwell API request fails"""
+
+    def __init__(self, message, errors):
+        super().__init__(message)
+
+        self.errors = errors

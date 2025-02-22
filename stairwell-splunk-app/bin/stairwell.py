@@ -13,16 +13,17 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from stairwelllib.stairwellapi import search_stairwell_ip_addresses_api, search_stairwell_object_api, search_stairwell_hostname_api
-from stairwelllib.logging import setup_logging
-from splunklib.searchcommands import dispatch, StreamingCommand, Configuration, Option
+"""Streaming search command for Stairwell"""
+
 import os
 import sys
+from stairwelllib.stairwellapi import search_stairwell_ip_addresses_api
+from stairwelllib.stairwellapi import search_stairwell_object_api
+from stairwelllib.stairwellapi import search_stairwell_hostname_api
+from stairwelllib.logging import setup_logging
+from splunklib.searchcommands import dispatch, StreamingCommand, Configuration, Option
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "splunklib"))
-
-sys.path.insert(0, os.path.join(
-    os.path.dirname(__file__), "..", "stairwelllib"))
 
 sys.path.insert(0, os.path.join(
     os.path.dirname(__file__), "..", "stairwelllib"))
@@ -30,6 +31,8 @@ sys.path.insert(0, os.path.join(
 
 @Configuration()
 class Stairwell(StreamingCommand):
+    """Class providing a streaming search command for Stairwell"""
+
     ip = Option(require=False)
     object = Option(require=False)
     hostname = Option(require=False)
@@ -56,7 +59,7 @@ class Stairwell(StreamingCommand):
             raise ValueError("Multiple inputs received")
 
         for record in records:
-            logger.debug(f"record before = {record}")
+            logger.debug("record before = %s", record)
             if 'ip_field' in locals() and ip_field in record and record[ip_field] != "":
                 # Send request to Stairwell API
                 response_dictionary = search_stairwell_ip_addresses_api(
@@ -72,18 +75,18 @@ class Stairwell(StreamingCommand):
                     record[key] = value
 
             elif 'hostname_field' in locals() and hostname_field in record and record[hostname_field] != "":
-                hostname_value = record[hostname_field]
                 # Send request to Stairwell API
                 response_dictionary = search_stairwell_hostname_api(
                     self, logger, record[hostname_field])
                 for key, value in response_dictionary.items():
                     record[key] = value
 
-            logger.debug(f"record after = {record}")
+            logger.debug("record after = %s", record)
 
             try:
                 yield record
             except StopIteration:
+                logger.error("Stairwell - stream - received StopIteration")
                 return
 
         logger.info("Stairwell - stream - exit")
