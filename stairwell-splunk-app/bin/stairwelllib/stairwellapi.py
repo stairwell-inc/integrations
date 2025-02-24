@@ -17,10 +17,10 @@
 
 import time
 import json
+from http import HTTPStatus
 
 from urllib.error import HTTPError
 import requests
-from http import HTTPStatus
 
 SECRET_REALM = 'stairwell_realm'
 SECRET_NAME = 'admin'
@@ -237,6 +237,10 @@ def get_from_api(search_command, logger, api_url):
             logger.debug(f"get_from_api exception: {e}")
             retry_attempts = process_error(
                 response, e.code, retry_attempts, logger)
+        except ValueError as e:
+            logger.debug("Unable to decode response")
+            raise StairwellAPIErrorException(
+                "Unable to decode API response", None) from e
 
 
 def process_error(response, code, retry_attempts, logger):
