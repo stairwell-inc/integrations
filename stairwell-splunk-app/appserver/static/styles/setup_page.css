@@ -68,3 +68,59 @@
     /* Styling for each line of the errors */
     color: rgba(255, 0, 0, 1);
 }
+/* Center form and limit width */
+.setup.container .form-container {
+    margin: 10px;
+  }
+  
+/* Flexbox for vertical alignment */
+.setup.container .form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Space between elements */
+    align-items: self-start;
+}
+
+/* Form group - flexbox for two columns */
+.setup.container .form-group {
+    display: flex;
+    align-items: left;
+    gap: 10px;
+  }
+  
+/* Style input fields */
+.setup.container input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 500px;
+}
+
+/* Labels - Fixed width so inputs align */
+.setup.container label {
+    width: 150px; /* Adjust as needed */
+    font-weight: bold;
+    text-align: right;
+  }
+
+/* Button container - aligns button to the right */
+.setup.container .button-container {
+    display: flex;
+    justify-content: flex-start; /* Aligns button to the left */
+  }
+
+/* Submit Button */
+.setup.container button {
+    padding: 10px;
+    background-color: #eb512a;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    width: 150px;
+  }
+ 
+.setup.container button:hover {
+    background-color: black;
+  } 
