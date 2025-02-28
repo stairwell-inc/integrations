@@ -30,10 +30,8 @@ MAX_RETRIES = 10
 
 ROOT_API_URL = "https://app.stairwell.com/v1/"
 METADATA_PATH = "/metadata"
-OBJECTS_API = "objects/"
 OBJECT_EVENT_API = "object_event/"
-IP_API = "ipAddresses/"
-HOSTNAME_API = "hostnames/"
+IP_EVENT_API = "ip_event/"
 HOSTNAME_EVENT_API = "hostname_event/"
 DEV_API_URL = "https://app.stairwell.dev/labs/appapi/enrichment/v1/"
 SPLUNK_IP_ADDRESS_ATTRIBUTE = "ipaddress"
@@ -70,7 +68,7 @@ def search_stairwell_ip_addresses_api(search_command, logger, ip_value):
     """Calls Stairwell API with an IP Address lookup"""
     logger.debug("Entered search_stairwell_ip_addresses_api")
 
-    api_url = f"{ROOT_API_URL}{IP_API}{ip_value}{METADATA_PATH}"
+    api_url = f"{DEV_API_URL}{IP_EVENT_API}{ip_value}"
     response_dictionary = {}
 
     try:
@@ -93,9 +91,15 @@ def search_stairwell_ip_addresses_api(search_command, logger, ip_value):
     # response_dictionary["stairwell_ai_assessment"]
 
     # Set IP Address specific resources
-    response_dictionary["stairwell_ip_address"] = response.get("ipaddress")
-    response_dictionary["stairwell_event_type"] = SPLUNK_IP_ADDRESS_ATTRIBUTE
-    response_dictionary["stairwell_tags"] = response.get("tags", [])
+    response_dictionary["stairwell_ip_address"] = ip_value
+    response_dictionary["stairwell_uninteresting_addr"] = response.get(
+        "uninterestingAddr")
+    response_dictionary["stairwell_opinions_most_recent"] = response.get(
+        "opinionsMostRecent", [])
+    response_dictionary["stairwell_comments_most_recent"] = response.get(
+        "commentsMostRecent", [])
+    response_dictionary["stairwell_associated_hostnames"] = response.get(
+        "associatedHostnames", [])
     return response_dictionary
 
 
@@ -140,7 +144,6 @@ def search_stairwell_object_api(search_command, logger, object_value):
         "verdictMalevalLabels")
     response_dictionary["stairwell_object_mal_eval_probability"] = response.get(
         "verdictMalevalMaliciousProbability")
-    # TODO: waiting for implementation in the API, before these can be completed.
     response_dictionary["stairwell_object_environments"] = response.get(
         "environments")
     response_dictionary["stairwell_object_yara_rule_matches"] = response.get(
@@ -238,9 +241,13 @@ def get_from_api(search_command, logger, api_url):
             retry_attempts = process_error(
                 response, e.code, retry_attempts, logger)
         except ValueError as e:
-            logger.debug("Unable to decode response")
-            raise StairwellAPIErrorException(
-                "Unable to decode API response", None) from e
+            error_message = "Unable to decode response"
+            logger.error(error_message)
+            raise StairwellAPIErrorException(error_message, None) from e
+        except requests.ReadTimeout as e:
+            error_message = "API request timeout"
+            logger.error(error_message)
+            raise StairwellAPIErrorException(error_message, None) from e
 
 
 def process_error(response, code, retry_attempts, logger):
@@ -264,19 +271,21 @@ def process_error(response, code, retry_attempts, logger):
 
             error_message = f"HTTP: {code}"
             logger.error(error_message)
-            raise StairwellAPIErrorException(
-                error_message, code)
+            raise StairwellAPIErrorException(error_message, code)
     elif code == HTTPStatus.NOT_FOUND:
+        logger.debug("Handle HTTP: NOT_FOUND")
         decoded_response = response.json()
-        raise StairwellAPIStatusException(
-            f"HTTP: {code}, Reason: {decoded_response}", code)
+        error_message = f"HTTP: {code}, Reason: {decoded_response}"
+        logger.error(error_message)
+        raise StairwellAPIStatusException(error_message, code)
     else:
         #  Other non successful responses
         if CODE_FIELD in response and MESSAGE_FIELD in response:
             code = response.get(CODE_FIELD)
             message = response.get(MESSAGE_FIELD)
-            raise StairwellAPIStatusException(
-                f"Status: {code}, Reason: {message}", code)
+            error_message = f"Status: {code}, Reason: {message}"
+            logger.error(error_message)
+            raise StairwellAPIStatusException(error_message, code)
         raise StairwellAPIErrorException(
             f"HTTP: {code}", code)
 
