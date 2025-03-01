@@ -134,6 +134,8 @@ def search_stairwell_object_api(search_command, logger, object_value):
 
     # Set Object specific resources
     response_dictionary["stairwell_object_md5"] = response.get("fileHashMd5")
+    response_dictionary["stairwell_object_sha1"] = response.get(
+        "fileHashSha1")
     response_dictionary["stairwell_object_sha256"] = response.get(
         "fileHashSha256")
     response_dictionary["stairwell_object_size"] = response.get(
@@ -152,6 +154,8 @@ def search_stairwell_object_api(search_command, logger, object_value):
         "indicatorsIpsLikely")
     response_dictionary["stairwell_object_network_indicators_hostnames"] = response.get(
         "indicatorsHostnamesLikely")
+    response_dictionary["stairwell_object_network_indicators_hostnames_private"] = response.get(
+        "indicatorsHostnamesPrivate")
     response_dictionary["stairwell_object_magic"] = response.get("fileMagic")
     response_dictionary["stairwell_object_mime_type"] = response.get(
         "fileMimeType")
