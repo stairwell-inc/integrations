@@ -15,13 +15,26 @@ access = read : [ * ], write : [ admin, power ]
 export = system
 owner = nobody
 version = 9.4.0
-modtime = 1738530890.867052000
+modtime = 1741031137.115562000
 
 [passwords/credential%3Astairwell_realm%3Aadmin%3A]
 owner = stephenlord
 version = 9.4.0
-modtime = 1739491345.949915000
+modtime = 1740780094.519670000
 
 [app/install]
 version = 9.4.0
-modtime = 1739491346.214587000
+modtime = 1740780094.765692000
+
+[]
+access = read : [ * ], write : [ * ]
+export = system
+version = 9.4.0
+modtime = 1741031217.600218000
+
+[views/setup_page_dashboard]
+access = read : [ * ], write : [ admin, power, user ]
+export = system
+owner = nobody
+version = 9.4.0
+modtime = 1741031127.858204000

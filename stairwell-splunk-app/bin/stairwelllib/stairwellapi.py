@@ -28,8 +28,6 @@ SECRET_NAME = 'admin'
 # The number of attempts to send API request if endpoint is busy
 MAX_RETRIES = 10
 
-ROOT_API_URL = "https://app.stairwell.com/v1/"
-METADATA_PATH = "/metadata"
 OBJECT_EVENT_API = "object_event/"
 IP_EVENT_API = "ip_event/"
 HOSTNAME_EVENT_API = "hostname_event/"
@@ -84,11 +82,6 @@ def search_stairwell_ip_addresses_api(search_command, logger, ip_value):
     response_dictionary["stairwell_event_type"] = SPLUNK_IP_ADDRESS_ATTRIBUTE
     response_dictionary["stairwell_resource_type"] = SPLUNK_IP_ADDRESS_ATTRIBUTE
     response_dictionary["stairwell_resource_id"] = ip_value
-    # TODO: waiting for implementation in the API, before these can be completed.
-    # response_dictionary["stairwell_comments"]
-    # response_dictionary["stairwell_tags"]
-    # response_dictionary["stairwell_opinions"]
-    # response_dictionary["stairwell_ai_assessment"]
 
     # Set IP Address specific resources
     response_dictionary["stairwell_ip_address"] = ip_value
@@ -123,11 +116,8 @@ def search_stairwell_object_api(search_command, logger, object_value):
     response_dictionary["stairwell_event_type"] = SPLUNK_OBJECT_ATTRIBUTE
     response_dictionary["stairwell_resource_type"] = SPLUNK_OBJECT_ATTRIBUTE
     response_dictionary["stairwell_resource_id"] = object_value
-    # TODO: waiting for implementation in the API, before these can be completed.
     response_dictionary["stairwell_comments"] = response.get(
         "commentsMostRecent")
-    # TODO: waiting for implementation in the API, before these can be completed.
-    # response_dictionary["stairwell_tags"]
     response_dictionary["stairwell_opinions"] = response.get(
         "opinionsMostRecent")
     response_dictionary["stairwell_ai_assessment"] = response.get("summaryAi")
@@ -199,13 +189,10 @@ def search_stairwell_hostname_api(search_command, logger, hostname_value):
     response_dictionary["stairwell_event_type"] = SPLUNK_HOSTNAME_ATTRIBUTE
     response_dictionary["stairwell_resource_type"] = SPLUNK_HOSTNAME_ATTRIBUTE
     response_dictionary["stairwell_resource_id"] = hostname_value
-    # TODO: waiting for implementation in the API, before these can be completed.
     response_dictionary["stairwell_comments"] = response.get(
         "commentsMostRecent")
-    # response_dictionary["stairwell_tags"]
     response_dictionary["stairwell_opinions"] = response.get(
         "opinionsMostRecent")
-    # response_dictionary["stairwell_ai_assessment"]
 
     # Set Hostname specific resources
     response_dictionary["stairwell_hostname"] = hostname_value
