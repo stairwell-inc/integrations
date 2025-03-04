@@ -52,7 +52,7 @@ export async function perform(splunk_js_sdk, { password, ...properties }) {
                 console.warn(err);
             }
             else {
-                console.log(storagePassword.properties());
+                console.log("store_secret.js Configuration parameters saved for Splunk App");
             }
         }
 
