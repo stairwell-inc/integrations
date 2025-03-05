@@ -43,17 +43,20 @@ List the output schema for hostname, IP address and object.
 2. To install the Stairwell App for Splunk you require Splunk privileges that allow app installation and configuration. To use the Stairwell App for Splunk you require priv1, priv2???
 
 ### Installing
-1. Download the app from <github>. This will be called stairwell-splunk-app.tar.gz
+1. Download the app from <github>. This will be called stairwell-splunk-app-1.0.0.tar.gz
 2. Log into your Splunk web interface.
 3. Navigate to Apps > Manage Apps.
 4. Click install app from file.
 5. Use the file explorer to find the file you downloaded.
 6. Click on upload. 
 7. Once the upload is successful you can configure the app.
-8. Select "Configure now"
-9. Enter your Authentication Token and Organization Id then Submit
-10. If you are using Splunk Enterprise it is recommended to restart your Splunk web interface.
-11. Stairwell for Splunk App will now appear under the list of apps installed.
+8. However, it is recommended that you select "Set up later".
+9. Perform a Splunk restart. ```$SPLUNK_HOME/bin/splunk restart```
+10. Log into your Splunk web interface again.
+11. Navigate to Apps > Stairwell App for Splunk
+12. Click the box that says Continue to app setup page
+13. Enter your Authentication Token and Organization Id then Submit
+14. Stairwell for Splunk App home page will now appear.
 
 ## Troubleshooting
 Please contact __support@stairwell.com__ for help.
