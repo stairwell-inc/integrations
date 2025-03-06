@@ -71,12 +71,16 @@ def search_stairwell_ip_addresses_api(search_command, logger, ip_value):
 
     try:
         response = get_from_api(search_command, logger, api_url)
-    except StairwellAPIStatusException as e:
-        response_dictionary["stairwell_status"] = e
-        return response_dictionary
     except StairwellAPIErrorException as e:
         response_dictionary["stairwell_error"] = e
         return response_dictionary
+
+    # Set Error/Status resources
+    response_dictionary["stairwell_status"] = response.get(
+        "stairwell_status")
+    response_dictionary["stairwell_status_details"] = response.get(
+        "stairwell_status_details")
+    response_dictionary["stairwell_error"] = response.get("stairwell_error")
 
     # Set Common Resources
     response_dictionary["stairwell_event_type"] = SPLUNK_IP_ADDRESS_ATTRIBUTE
@@ -105,12 +109,16 @@ def search_stairwell_object_api(search_command, logger, object_value):
 
     try:
         response = get_from_api(search_command, logger, api_url)
-    except StairwellAPIStatusException as e:
-        response_dictionary["stairwell_status"] = e
-        return response_dictionary
     except StairwellAPIErrorException as e:
         response_dictionary["stairwell_error"] = e
         return response_dictionary
+
+    # Set Error/Status resources
+    response_dictionary["stairwell_status"] = response.get(
+        "stairwell_status")
+    response_dictionary["stairwell_status_details"] = response.get(
+        "stairwell_status_details")
+    response_dictionary["stairwell_error"] = response.get("stairwell_error")
 
     # Set Common Resources
     response_dictionary["stairwell_event_type"] = SPLUNK_OBJECT_ATTRIBUTE
@@ -178,12 +186,16 @@ def search_stairwell_hostname_api(search_command, logger, hostname_value):
 
     try:
         response = get_from_api(search_command, logger, api_url)
-    except StairwellAPIStatusException as e:
-        response_dictionary["stairwell_status"] = e
-        return response_dictionary
     except StairwellAPIErrorException as e:
         response_dictionary["stairwell_error"] = e
         return response_dictionary
+
+    # Set Error/Status resources
+    response_dictionary["stairwell_status"] = response.get(
+        "stairwell_status")
+    response_dictionary["stairwell_status_details"] = response.get(
+        "stairwell_status_details")
+    response_dictionary["stairwell_error"] = response.get("stairwell_error")
 
     # Set Common Resources
     response_dictionary["stairwell_event_type"] = SPLUNK_HOSTNAME_ATTRIBUTE
@@ -217,15 +229,34 @@ def get_from_api(search_command, logger, api_url):
             response = requests.get(api_url, headers=headers, timeout=10)
             status = response.status_code
             logger.debug(f"Response status_code {status}")
+            decoded_response = response.json()
             # successful response
             if status == HTTPStatus.OK:
-                decoded_response = response.json()
                 logger.debug(f"Response: {decoded_response}")
                 return decoded_response
-
-            # handle non successful response
-            retry_attempts = process_error(
-                response, status, retry_attempts, logger)
+            if status == HTTPStatus.NOT_FOUND:
+                logger.debug("Handle HTTP: NOT_FOUND")
+                logger.debug(f"Response: {decoded_response}")
+                status_details_dict = decoded_response.get("details", {})[0]
+                decoded_response["stairwell_status"] = "NOT FOUND"
+                decoded_response["stairwell_status_details"] = status_details_dict
+                return decoded_response
+            if status in (HTTPStatus.TOO_MANY_REQUESTS, HTTPStatus.INTERNAL_SERVER_ERROR):
+                # handle non successful response
+                retry_attempts = process_error(
+                    response, status, retry_attempts, logger)
+            else:
+                #  Other non successful responses
+                if CODE_FIELD in decoded_response and MESSAGE_FIELD in decoded_response:
+                    code = decoded_response.get(CODE_FIELD)
+                    message = decoded_response.get(MESSAGE_FIELD)
+                    error_message = f"Status: {code}, Reason: {message}"
+                    logger.error(error_message)
+                    decoded_response["stairwell_error"] = error_message
+                    return decoded_response
+                else:
+                    decoded_response["stairwell_error"] = f"HTTP: {status}"
+                    return decoded_response
 
         except HTTPError as e:
             logger.debug(f"get_from_api exception: {e}")
@@ -263,31 +294,6 @@ def process_error(response, code, retry_attempts, logger):
             error_message = f"HTTP: {code}"
             logger.error(error_message)
             raise StairwellAPIErrorException(error_message, code)
-    elif code == HTTPStatus.NOT_FOUND:
-        logger.debug("Handle HTTP: NOT_FOUND")
-        decoded_response = response.json()
-        error_message = f"HTTP: {code}, Reason: {decoded_response}"
-        logger.error(error_message)
-        raise StairwellAPIStatusException(error_message, code)
-    else:
-        #  Other non successful responses
-        if CODE_FIELD in response and MESSAGE_FIELD in response:
-            code = response.get(CODE_FIELD)
-            message = response.get(MESSAGE_FIELD)
-            error_message = f"Status: {code}, Reason: {message}"
-            logger.error(error_message)
-            raise StairwellAPIStatusException(error_message, code)
-        raise StairwellAPIErrorException(
-            f"HTTP: {code}", code)
-
-
-class StairwellAPIStatusException(Exception):
-    """Exception used when a Stairwell API request returns an error code"""
-
-    def __init__(self, message, errors):
-        super().__init__(message)
-
-        self.errors = errors
 
 
 class StairwellAPIErrorException(Exception):
