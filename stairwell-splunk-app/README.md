@@ -2,7 +2,9 @@
 
 Add Stairwell enrichment data to your Splunk events with the Stairwell App for Splunk. This application uses Stairwell private malware analysis to integrate directly with your Splunk experience. Enrich Splunk events based on analyis of hostnames, IP Address and file hashes.
 
-The Stairwell App for Splunk requires a valid Stairwell API license and Splunk user privileges required for app installation. When the app is installed you have access to Stairwell commands to provide data enrichment that extends your defences beyond the limitations of traditional SIEMS tools.
+The Stairwell App for Splunk requires a valid Stairwell API license and Splunk user privileges required for app installation. The app makes calls to the Stairwell API. When the app is installed you have access to Stairwell commands to provide data enrichment that extends your defences beyond the limitations of traditional SIEMS tools.
+
+The Stairwell App for Splunk is compatible with Splunk Enterprise 9.4.0
 
 For the very latest information on how to use this app visit [Stairwell App for Splunk](https://docs.stairwell.com/docs/configure-splunk-application)
 
@@ -11,7 +13,6 @@ For the very latest information on how to use this app visit [Stairwell App for 
 This command operates on each event independently resulting from a search. It adds Stairwell enrichment data to each event that matches the type of data and the criteria given.
 
 There are 3 types of data currently supported:
-File hashes currently supported include md5, SHA1, SHA256 <do we need to list these?>
 #### Hostnames
 Example: find any field in the event called "host" and add Stairwell hostname enrichment data to it.
 
@@ -27,6 +28,7 @@ Example: find any field in the event called "ipaddress" and add Stairwell IP Add
 ```
 
 #### Objects (file hashes)
+File hashes currently supported include MD5, SHA1, SHA256.
 Example: find any field in the event called "SHA256" and add Stairwell object enrichment data to it.
 
 ```
@@ -34,7 +36,7 @@ Example: find any field in the event called "SHA256" and add Stairwell object en
 ```
 
 ### What Stairwell enrichment data is provided?
-List the output schema for hostname, IP address and object.
+See [Stairwell App for Splunk](https://docs.stairwell.com/docs/configure-splunk-application) for details.
 
 ## Installation
 ### Prerequisites
