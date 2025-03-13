@@ -19,7 +19,9 @@ import sys
 from stairwelllib.stairwellapi import search_stairwell_ip_addresses_api
 from stairwelllib.stairwellapi import search_stairwell_object_api
 from stairwelllib.stairwellapi import search_stairwell_hostname_api
-from stairwelllib.logging import setup_logging
+from stairwelllib.stairwellapi import BASE_URL
+from stairwelllib.client import StairwellAPI, StairwellEnrichmentClient
+from stairwelllib.swlogging import setup_logging
 from splunklib.searchcommands import dispatch, StreamingCommand, Configuration, Option
 
 
@@ -30,6 +32,11 @@ class Stairwell(StreamingCommand):
     ip = Option(require=False)
     object = Option(require=False)
     hostname = Option(require=False)
+
+    client: StairwellAPI
+
+    def __init__(self):
+        self.client = StairwellEnrichmentClient(BASE_URL, "", "", "")
 
     def stream(self, records):
         logger = setup_logging()

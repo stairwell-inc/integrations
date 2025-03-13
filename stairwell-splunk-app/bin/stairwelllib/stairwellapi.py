@@ -28,7 +28,7 @@ SECRET_NAME = "admin"
 # The number of attempts to send API request if endpoint is busy
 MAX_RETRIES = 10
 
-BASE_URL = "https://app.stairwell.com/"
+BASE_URL = "https://app.stairwell.dev/"
 API_PATH = "labs/appapi/enrichment/v1/"
 OBJECT_EVENT_API = "object_event/"
 IP_EVENT_API = "ip_event/"
@@ -78,7 +78,8 @@ def search_stairwell_ip_addresses_api(search_command, logger, ip_value):
     response_dictionary = {}
 
     try:
-        response = get_from_api(search_command, logger, api_url)
+        response = search_command.client.get_ip_event_enrichment(ip_value)
+        print("response", response)
     except StairwellAPIErrorException as e:
         response_dictionary["stairwell_error"] = e
         return response_dictionary

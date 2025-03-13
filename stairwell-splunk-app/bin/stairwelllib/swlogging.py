@@ -28,3 +28,6 @@ def setup_logging():
         LOGGING_STANZA_NAME,
     )
     return logger
+
+def fake_logger():
+    return logging.getLogger("splunk.stairwell.test")
