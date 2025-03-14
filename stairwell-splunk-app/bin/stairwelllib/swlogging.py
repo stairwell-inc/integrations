@@ -29,5 +29,6 @@ def setup_logging():
     )
     return logger
 
+
 def fake_logger():
     return logging.getLogger("splunk.stairwell.test")

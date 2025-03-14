@@ -6,3 +6,4 @@ stairwell-splunk-app/local
 stairwell-splunk-app/metadata/local.meta
 stairwell-splunk-app/bin/__pycache__
 .pytest_cache
+.vscode

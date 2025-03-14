@@ -55,13 +55,11 @@ class Stairwell(StreamingCommand):
         """Initializes the Stairwell enrichment API client. Should be called
         before any requests are attempted.
         """
-        # Load credentials from splunkd
         secrets = get_encrypted_token(self)
         secrets_json = json.loads(secrets)
         auth_token = secrets_json["password"]
         organization_id = secrets_json["organizationId"]
         user_id = secrets_json["userId"]
-        # Create API client:
         self.client = StairwellEnrichmentClient(
             BASE_URL, auth_token, organization_id, user_id
         )
