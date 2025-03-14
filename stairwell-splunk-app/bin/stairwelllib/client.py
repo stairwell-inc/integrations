@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
+from typing import Optional
 import requests
 from http import HTTPStatus
+from logging import Logger
 import time
 
 
@@ -20,8 +22,12 @@ class StairwellAPI(ABC):
 
 
 API_PATH = "labs/appapi/enrichment/v1/"
+
 CODE_FIELD = "code"
 MESSAGE_FIELD = "message"
+
+REQUEST_TIMEOUT_SECS = 20
+MAX_RETRIES = 10
 
 
 class StairwellEnrichmentClient(StairwellAPI):
@@ -31,9 +37,9 @@ class StairwellEnrichmentClient(StairwellAPI):
     # Request headers for all Stairwell API requests, constructed from auth token, org ID etc:
     headers: dict[str, str]
 
-    request_timeout: int = 20
-    max_retries: int = 10
-    logger = None  # type: ignore
+    request_timeout: int = REQUEST_TIMEOUT_SECS
+    max_retries: int = MAX_RETRIES
+    logger: Optional[Logger]
 
     def __init__(
         self, base_url: str, auth_token: str, organization_id: str, user_id: str = ""
@@ -48,7 +54,7 @@ class StairwellEnrichmentClient(StairwellAPI):
     def _debug(self, msg: str):
         if self.logger is None:
             return
-        self.logger.debug(msg)  # type: ignore
+        self.logger.debug(msg)
 
     def _get_request(self, path: str) -> dict:
         self._debug(path)

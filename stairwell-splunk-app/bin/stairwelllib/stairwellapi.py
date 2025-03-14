@@ -15,9 +15,6 @@
 
 """Functions for translating Stairwell API responses into Splunk records."""
 
-REQUEST_TIMEOUT_SECS = 20
-
-BASE_URL = "https://app.stairwell.dev/"
 SPLUNK_IP_ADDRESS_ATTRIBUTE = "ipaddress"
 SPLUNK_OBJECT_ATTRIBUTE = "object"
 SPLUNK_HOSTNAME_ATTRIBUTE = "hostname"

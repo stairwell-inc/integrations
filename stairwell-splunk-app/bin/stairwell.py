@@ -17,15 +17,16 @@
 
 import sys
 import json
+from logging import Logger
 from typing import Optional
 from stairwelllib.stairwellapi import search_stairwell_ip_addresses_api
 from stairwelllib.stairwellapi import search_stairwell_object_api
 from stairwelllib.stairwellapi import search_stairwell_hostname_api
-from stairwelllib.stairwellapi import BASE_URL
 from stairwelllib.client import StairwellAPI, StairwellEnrichmentClient
 from stairwelllib.swlogging import setup_logging
 from splunklib.searchcommands import dispatch, StreamingCommand, Configuration, Option
 
+BASE_URL = "https://app.stairwell.com/"
 
 SECRET_REALM = "stairwell_realm"
 SECRET_NAME = "admin"
@@ -51,7 +52,7 @@ class Stairwell(StreamingCommand):
 
     client: Optional[StairwellAPI] = None
 
-    def init_client(self):
+    def init_client(self, logger: Optional[Logger] = None):
         """Initializes the Stairwell enrichment API client. Should be called
         before any requests are attempted.
         """
@@ -60,9 +61,12 @@ class Stairwell(StreamingCommand):
         auth_token = secrets_json["password"]
         organization_id = secrets_json["organizationId"]
         user_id = secrets_json["userId"]
-        self.client = StairwellEnrichmentClient(
+
+        client = StairwellEnrichmentClient(
             BASE_URL, auth_token, organization_id, user_id
         )
+        client.logger = logger
+        self.client = client
 
     def stream(self, records):
         logger = setup_logging()
