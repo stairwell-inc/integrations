@@ -4,3 +4,5 @@ stairwell-splunk-app/bin/stairwelllib/__pycache__
 stairwell-splunk-app/bin/stairwell-splunk-app.code-workspace
 stairwell-splunk-app/local
 stairwell-splunk-app/metadata/local.meta
+stairwell-splunk-app/bin/__pycache__
+.pytest_cache

@@ -13,312 +13,134 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-"""Functions for use with the Stairwell API"""
-
-import time
-import json
-from http import HTTPStatus
-
-from urllib.error import HTTPError
-import requests
-
-SECRET_REALM = "stairwell_realm"
-SECRET_NAME = "admin"
-
-# The number of attempts to send API request if endpoint is busy
-MAX_RETRIES = 10
-
-BASE_URL = "https://app.stairwell.dev/"
-API_PATH = "labs/appapi/enrichment/v1/"
-OBJECT_EVENT_API = "object_event/"
-IP_EVENT_API = "ip_event/"
-HOSTNAME_EVENT_API = "hostname_event/"
+"""Functions for translating Stairwell API responses into Splunk records."""
 
 REQUEST_TIMEOUT_SECS = 20
 
+BASE_URL = "https://app.stairwell.dev/"
 SPLUNK_IP_ADDRESS_ATTRIBUTE = "ipaddress"
 SPLUNK_OBJECT_ATTRIBUTE = "object"
 SPLUNK_HOSTNAME_ATTRIBUTE = "hostname"
 
-CODE_FIELD = "code"
-MESSAGE_FIELD = "message"
+
+# TODO: Generate from API definition. Maps from fields in the JSON Stairwell API
+# response to the column names of output Splunk records.
+common_response_to_record_field_mapping = {
+    # Error / status resources
+    "stairwell_status": "stairwell_status",
+    "stairwell_status_details": "stairwell_status_details",
+    "stairwell_error": "stairwell_error",
+    # Shared fields
+    "opinionsMostRecent": "stairwell_opinions_most_recent",
+    "commentsMostRecent": "stairwell_comments_most_recent",
+    "summaryAi": "stairwell_ai_assessment",
+}
+
+ip_response_to_record_field_mapping = {
+    "uninterestingAddr": "stairwell_uninteresting_addr",
+    "associatedHostnames": "stairwell_associated_hostnames",
+}
+
+hash_response_to_record_field_mapping = {
+    "fileHashMd5": "stairwell_object_md5",
+    "fileHashSha1": "stairwell_object_sha1",
+    "fileHashSha256": "stairwell_object_sha256",
+    "fileSize": "stairwell_object_size",
+    "sightingsFirst": "stairwell_object_first_seen_time",
+    "verdictMalevalLabels": "stairwell_object_mal_eval",
+    "verdictMalevalMaliciousProbability": "stairwell_object_mal_eval_probability",
+    "verdictYaraRuleMatches": "stairwell_object_yara_rule_matches",
+    "indicatorsIpsLikely": "stairwell_object_network_indicators_ip_addresses",
+    "indicatorsHostnamesLikely": "stairwell_object_network_indicators_hostnames",
+    "indicatorsHostnamesPrivate": "stairwell_object_network_indicators_hostnames_private",
+    "fileMagic": "stairwell_object_magic",
+    "fileMimeType": "stairwell_object_mime_type",
+    "fileEntropy": "stairwell_object_entropy",
+    "fileHashImphash": "stairwell_object_imp_hash",
+    "fileHashSortedImphash": "stairwell_object_sorted_imp_hash",
+    "fileHashTlsh": "stairwell_object_tlsh",
+    "signature": "stairwell_object_signature",
+    "sightingsPrevalence": "stairwell_object_prevalence",
+    "verdictIsWellKnown": "stairwell_object_is_well_known",
+    "variants": "stairwell_object_variants",
+    "summaryRtg": "stairwell_object_run_to_ground",
+}
+
+hostname_response_to_record_field_mapping = {
+    "lookupARecords": "stairwell_hostname_a_records",
+    "lookupAaaaRecords": "stairwell_hostname_aaaa_records",
+    "lookupMxRecords": "stairwell_hostname_mx_records",
+}
 
 
-def get_encrypted_token(search_command):
-    """Retrieves an app configuration token, comprising password, organizationId, userId"""
-    secrets = search_command.service.storage_passwords
-    return next(
-        secret
-        for secret in secrets
-        if (secret.realm == SECRET_REALM and secret.username == SECRET_NAME)
-    ).clear_password
-
-
-def get_outbound_headers(search_command):
-    """Creates required headers in request to Stairwell API"""
-    secrets = get_encrypted_token(search_command)
-    secrets_json = json.loads(secrets)
-    auth_token = secrets_json["password"]
-    organization_id = secrets_json["organizationId"]
-    user_id = secrets_json["userId"]
-    headers = {
-        "Authorization": f"{auth_token}",
-        "Organization-Id": f"{organization_id}",
-        "User-Id": f"{user_id}",
-        "accept": "application/json",
-    }
-    return headers
+def translate_response_fields(response, mappings):
+    """From an input response dict, extracts all values matching keys in the
+    response to record field mappings and sets them in a record output dict.
+    """
+    record = {}
+    for mapping in mappings:
+        for responseKey, recordKey in mapping.items():
+            v = response.get(responseKey)
+            if v != None:
+                record[recordKey] = v
+    return record
 
 
 def search_stairwell_ip_addresses_api(search_command, logger, ip_value):
     """Calls Stairwell API with an IP Address lookup"""
     logger.debug("Entered search_stairwell_ip_addresses_api")
 
-    api_url = f"{BASE_URL}{API_PATH}{IP_EVENT_API}{ip_value}"
-    response_dictionary = {}
+    response = search_command.client.get_ip_event_enrichment(ip_value)
+    record = translate_response_fields(
+        response,
+        [common_response_to_record_field_mapping, ip_response_to_record_field_mapping],
+    )
 
-    try:
-        response = search_command.client.get_ip_event_enrichment(ip_value)
-        print("response", response)
-    except StairwellAPIErrorException as e:
-        response_dictionary["stairwell_error"] = e
-        return response_dictionary
+    # Set non-response resources
+    record["stairwell_event_type"] = SPLUNK_IP_ADDRESS_ATTRIBUTE
+    record["stairwell_resource_type"] = SPLUNK_IP_ADDRESS_ATTRIBUTE
+    record["stairwell_resource_id"] = ip_value
 
-    # Set Error/Status resources
-    response_dictionary["stairwell_status"] = response.get("stairwell_status")
-    response_dictionary["stairwell_status_details"] = response.get(
-        "stairwell_status_details"
-    )
-    response_dictionary["stairwell_error"] = response.get("stairwell_error")
-
-    # Set Common Resources
-    response_dictionary["stairwell_event_type"] = SPLUNK_IP_ADDRESS_ATTRIBUTE
-    response_dictionary["stairwell_resource_type"] = SPLUNK_IP_ADDRESS_ATTRIBUTE
-    response_dictionary["stairwell_resource_id"] = ip_value
-
-    # Set IP Address specific resources
-    response_dictionary["stairwell_ip_address"] = ip_value
-    response_dictionary["stairwell_uninteresting_addr"] = response.get(
-        "uninterestingAddr"
-    )
-    response_dictionary["stairwell_opinions_most_recent"] = response.get(
-        "opinionsMostRecent", []
-    )
-    response_dictionary["stairwell_comments_most_recent"] = response.get(
-        "commentsMostRecent", []
-    )
-    response_dictionary["stairwell_associated_hostnames"] = response.get(
-        "associatedHostnames", []
-    )
-    return response_dictionary
+    return record
 
 
 def search_stairwell_object_api(search_command, logger, object_value):
     """Calls Stairwell API with an Object lookup"""
     logger.debug("Entered search_stairwell_object_api")
 
-    api_url = f"{BASE_URL}{API_PATH}{OBJECT_EVENT_API}{object_value}"
-    response_dictionary = {}
+    response = search_command.client.get_object_event_enrichment(object_value)
+    record = translate_response_fields(
+        response,
+        [
+            common_response_to_record_field_mapping,
+            hash_response_to_record_field_mapping,
+        ],
+    )
+    # Set non-response resources
+    record["stairwell_event_type"] = SPLUNK_OBJECT_ATTRIBUTE
+    record["stairwell_resource_type"] = SPLUNK_OBJECT_ATTRIBUTE
+    record["stairwell_resource_id"] = object_value
 
-    try:
-        response = get_from_api(search_command, logger, api_url)
-    except StairwellAPIErrorException as e:
-        response_dictionary["stairwell_error"] = e
-        return response_dictionary
-
-    # Set Error/Status resources
-    response_dictionary["stairwell_status"] = response.get("stairwell_status")
-    response_dictionary["stairwell_status_details"] = response.get(
-        "stairwell_status_details"
-    )
-    response_dictionary["stairwell_error"] = response.get("stairwell_error")
-
-    # Set Common Resources
-    response_dictionary["stairwell_event_type"] = SPLUNK_OBJECT_ATTRIBUTE
-    response_dictionary["stairwell_resource_type"] = SPLUNK_OBJECT_ATTRIBUTE
-    response_dictionary["stairwell_resource_id"] = object_value
-    response_dictionary["stairwell_comments"] = response.get("commentsMostRecent")
-    response_dictionary["stairwell_opinions"] = response.get("opinionsMostRecent")
-    response_dictionary["stairwell_ai_assessment"] = response.get("summaryAi")
-
-    # Set Object specific resources
-    response_dictionary["stairwell_object_md5"] = response.get("fileHashMd5")
-    response_dictionary["stairwell_object_sha1"] = response.get("fileHashSha1")
-    response_dictionary["stairwell_object_sha256"] = response.get("fileHashSha256")
-    response_dictionary["stairwell_object_size"] = response.get("fileSize", "0")
-    response_dictionary["stairwell_object_first_seen_time"] = response.get(
-        "sightingsFirst"
-    )
-    response_dictionary["stairwell_object_mal_eval"] = response.get(
-        "verdictMalevalLabels"
-    )
-    response_dictionary["stairwell_object_mal_eval_probability"] = response.get(
-        "verdictMalevalMaliciousProbability"
-    )
-    response_dictionary["stairwell_object_environments"] = response.get("environments")
-    response_dictionary["stairwell_object_yara_rule_matches"] = response.get(
-        "verdictYaraRuleMatches"
-    )
-    response_dictionary["stairwell_object_network_indicators_ipAddresses"] = (
-        response.get("indicatorsIpsLikely")
-    )
-    response_dictionary["stairwell_object_network_indicators_hostnames"] = response.get(
-        "indicatorsHostnamesLikely"
-    )
-    response_dictionary["stairwell_object_network_indicators_hostnames_private"] = (
-        response.get("indicatorsHostnamesPrivate")
-    )
-    response_dictionary["stairwell_object_magic"] = response.get("fileMagic")
-    response_dictionary["stairwell_object_mime_type"] = response.get("fileMimeType")
-    response_dictionary["stairwell_object_entropy"] = response.get("fileEntropy")
-    response_dictionary["stairwell_object_imp_hash"] = response.get("fileHashImphash")
-    response_dictionary["stairwell_object_sorted_imp_hash"] = response.get(
-        "fileHashSortedImphash"
-    )
-    response_dictionary["stairwell_object_tlsh"] = response.get("fileHashTlsh")
-    response_dictionary["stairwell_object_signature"] = response.get("signature")
-    response_dictionary["stairwell_object_prevalence"] = response.get(
-        "sightingsPrevalence"
-    )
-    response_dictionary["stairwell_object_is_well_know"] = response.get(
-        "verdictIsWellKnown"
-    )
-    response_dictionary["stairwell_object_variants"] = response.get("variants")
-    response_dictionary["stairwell_object_run_to_ground"] = response.get("summaryRtg")
-    logger.debug(f"responseDirectory: \n{response_dictionary}")
-    return response_dictionary
+    return record
 
 
 def search_stairwell_hostname_api(search_command, logger, hostname_value):
     """Calls Stairwell API with a hostname lookup"""
     logger.debug("Entered search_stairwell_hostname_api")
 
-    api_url = f"{BASE_URL}{API_PATH}{HOSTNAME_EVENT_API}{hostname_value}"
-    response_dictionary = {}
-
-    try:
-        response = get_from_api(search_command, logger, api_url)
-    except StairwellAPIErrorException as e:
-        response_dictionary["stairwell_error"] = e
-        return response_dictionary
-
-    # Set Error/Status resources
-    response_dictionary["stairwell_status"] = response.get("stairwell_status")
-    response_dictionary["stairwell_status_details"] = response.get(
-        "stairwell_status_details"
+    response = search_command.client.get_hostname_event_enrichment(hostname_value)
+    record = translate_response_fields(
+        response,
+        [
+            common_response_to_record_field_mapping,
+            hostname_response_to_record_field_mapping,
+        ],
     )
-    response_dictionary["stairwell_error"] = response.get("stairwell_error")
 
-    # Set Common Resources
-    response_dictionary["stairwell_event_type"] = SPLUNK_HOSTNAME_ATTRIBUTE
-    response_dictionary["stairwell_resource_type"] = SPLUNK_HOSTNAME_ATTRIBUTE
-    response_dictionary["stairwell_resource_id"] = hostname_value
-    response_dictionary["stairwell_comments"] = response.get("commentsMostRecent")
-    response_dictionary["stairwell_opinions"] = response.get("opinionsMostRecent")
+    # Set non-response resources
+    record["stairwell_event_type"] = SPLUNK_HOSTNAME_ATTRIBUTE
+    record["stairwell_resource_type"] = SPLUNK_HOSTNAME_ATTRIBUTE
+    record["stairwell_resource_id"] = hostname_value
+    record["stairwell_hostname"] = hostname_value
 
-    # Set Hostname specific resources
-    response_dictionary["stairwell_hostname"] = hostname_value
-    response_dictionary["stairwell_hostname_a_records"] = response.get("lookupARecords")
-    response_dictionary["stairwell_hostname_aaaa_records"] = response.get(
-        "lookupAaaaRecords"
-    )
-    response_dictionary["stairwell_hostname_mx_records"] = response.get(
-        "lookupMxRecords"
-    )
-    return response_dictionary
-
-
-def get_from_api(search_command, logger, api_url):
-    """Calls an API with provided api_url and handles error responses."""
-    logger.debug("Entered get_from_api")
-    headers = get_outbound_headers(search_command)
-
-    retry_attempts = 0
-    while True:
-        try:
-            logger.debug(f"Request: {api_url}")
-            response = requests.get(
-                api_url, headers=headers, timeout=REQUEST_TIMEOUT_SECS
-            )
-            status = response.status_code
-            logger.debug(f"Response status_code {status}")
-            decoded_response = response.json()
-            # successful response
-            if status == HTTPStatus.OK:
-                logger.debug(f"Response: {decoded_response}")
-                return decoded_response
-            if status == HTTPStatus.NOT_FOUND:
-                logger.debug("Handle HTTP: NOT_FOUND")
-                logger.debug(f"Response: {decoded_response}")
-                status_details_dict = decoded_response.get("details", {})[0]
-                decoded_response["stairwell_status"] = "NOT FOUND"
-                decoded_response["stairwell_status_details"] = status_details_dict
-                return decoded_response
-            if status in (
-                HTTPStatus.TOO_MANY_REQUESTS,
-                HTTPStatus.INTERNAL_SERVER_ERROR,
-            ):
-                # handle non successful response
-                retry_attempts = process_error(response, status, retry_attempts, logger)
-            else:
-                #  Other non successful responses
-                if CODE_FIELD in decoded_response and MESSAGE_FIELD in decoded_response:
-                    code = decoded_response.get(CODE_FIELD)
-                    message = decoded_response.get(MESSAGE_FIELD)
-                    error_message = f"Status: {code}, Reason: {message}"
-                    logger.error(error_message)
-                    decoded_response["stairwell_error"] = error_message
-                    return decoded_response
-                else:
-                    decoded_response["stairwell_error"] = f"HTTP: {status}"
-                    return decoded_response
-
-        except HTTPError as e:
-            logger.debug(f"HTTPError: {e}")
-            retry_attempts = process_error(response, e.code, retry_attempts, logger)
-        except ValueError as e:
-            logger.debug(f"ValueError: {e}")
-            error_message = "Unable to decode response"
-            logger.error(error_message)
-            raise StairwellAPIErrorException(error_message, None) from e
-        except requests.ReadTimeout as e:
-            logger.debug(f"ReadTimeout: {e}")
-            error_message = "API request timeout"
-            logger.error(error_message)
-            raise StairwellAPIErrorException(error_message, None) from e
-
-
-def process_error(response, code, retry_attempts, logger):
-    """Provide error handling and retry functionality based on API response"""
-    logger.debug(f"process_error code:{code} \nresponse:{response} ")
-    if code in (HTTPStatus.TOO_MANY_REQUESTS, HTTPStatus.INTERNAL_SERVER_ERROR):
-        # Retry-After response
-        sleep_time = int(response.headers["Retry-After"])
-        if retry_attempts <= MAX_RETRIES and sleep_time > 0:
-            retry_attempts += 1
-            logger.info(
-                f"HTTP: TOO_MANY_REQUESTS. Attempt {retry_attempts}. Sleeping for {sleep_time}"
-            )
-            time.sleep(sleep_time)
-            return retry_attempts
-        else:
-            if retry_attempts > MAX_RETRIES:
-                logger.error(
-                    f"HTTP Code {code}. Stairwell API {MAX_RETRIES} retried attempted"
-                )
-                raise StairwellAPIErrorException(
-                    f"Stairwell API {MAX_RETRIES} retried attempted", code
-                )
-
-            error_message = f"HTTP: {code}"
-            logger.error(error_message)
-            raise StairwellAPIErrorException(error_message, code)
-
-
-class StairwellAPIErrorException(Exception):
-    """Exception used when a Stairwell API request fails"""
-
-    def __init__(self, message, errors):
-        super().__init__(message)
-
-        self.errors = errors
+    return record
