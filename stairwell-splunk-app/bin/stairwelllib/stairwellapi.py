@@ -34,7 +34,7 @@ OBJECT_EVENT_API = "object_event/"
 IP_EVENT_API = "ip_event/"
 HOSTNAME_EVENT_API = "hostname_event/"
 
-REQUEST_TIMEOUT = 20 # seconds
+REQUEST_TIMEOUT_SECS = 20
 
 SPLUNK_IP_ADDRESS_ATTRIBUTE = "ipaddress"
 SPLUNK_OBJECT_ATTRIBUTE = "object"
@@ -230,7 +230,7 @@ def get_from_api(search_command, logger, api_url):
     while True:
         try:
             logger.debug(f"Request: {api_url}")
-            response = requests.get(api_url, headers=headers, timeout=REQUEST_TIMEOUT)
+            response = requests.get(api_url, headers=headers, timeout=REQUEST_TIMEOUT_SECS)
             status = response.status_code
             logger.debug(f"Response status_code {status}")
             decoded_response = response.json()
