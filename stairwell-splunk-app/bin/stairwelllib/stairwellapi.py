@@ -28,10 +28,14 @@ SECRET_NAME = 'admin'
 # The number of attempts to send API request if endpoint is busy
 MAX_RETRIES = 10
 
+BASE_URL = "https://app.stairwell.com/"
+API_PATH = "labs/appapi/enrichment/v1/"
 OBJECT_EVENT_API = "object_event/"
 IP_EVENT_API = "ip_event/"
 HOSTNAME_EVENT_API = "hostname_event/"
-DEV_API_URL = "https://app.stairwell.dev/labs/appapi/enrichment/v1/"
+
+REQUEST_TIMEOUT_SECS = 20
+
 SPLUNK_IP_ADDRESS_ATTRIBUTE = "ipaddress"
 SPLUNK_OBJECT_ATTRIBUTE = "object"
 SPLUNK_HOSTNAME_ATTRIBUTE = "hostname"
@@ -66,7 +70,7 @@ def search_stairwell_ip_addresses_api(search_command, logger, ip_value):
     """Calls Stairwell API with an IP Address lookup"""
     logger.debug("Entered search_stairwell_ip_addresses_api")
 
-    api_url = f"{DEV_API_URL}{IP_EVENT_API}{ip_value}"
+    api_url = f"{BASE_URL}{API_PATH}{IP_EVENT_API}{ip_value}"
     response_dictionary = {}
 
     try:
@@ -104,7 +108,7 @@ def search_stairwell_object_api(search_command, logger, object_value):
     """Calls Stairwell API with an Object lookup"""
     logger.debug("Entered search_stairwell_object_api")
 
-    api_url = f"{DEV_API_URL}{OBJECT_EVENT_API}{object_value}"
+    api_url = f"{BASE_URL}{API_PATH}{OBJECT_EVENT_API}{object_value}"
     response_dictionary = {}
 
     try:
@@ -181,7 +185,7 @@ def search_stairwell_hostname_api(search_command, logger, hostname_value):
     """Calls Stairwell API with a hostname lookup"""
     logger.debug("Entered search_stairwell_hostname_api")
 
-    api_url = f"{DEV_API_URL}{HOSTNAME_EVENT_API}{hostname_value}"
+    api_url = f"{BASE_URL}{API_PATH}{HOSTNAME_EVENT_API}{hostname_value}"
     response_dictionary = {}
 
     try:
@@ -226,7 +230,7 @@ def get_from_api(search_command, logger, api_url):
     while True:
         try:
             logger.debug(f"Request: {api_url}")
-            response = requests.get(api_url, headers=headers, timeout=10)
+            response = requests.get(api_url, headers=headers, timeout=REQUEST_TIMEOUT_SECS)
             status = response.status_code
             logger.debug(f"Response status_code {status}")
             decoded_response = response.json()
@@ -259,14 +263,16 @@ def get_from_api(search_command, logger, api_url):
                     return decoded_response
 
         except HTTPError as e:
-            logger.debug(f"get_from_api exception: {e}")
+            logger.debug(f"HTTPError: {e}")
             retry_attempts = process_error(
                 response, e.code, retry_attempts, logger)
         except ValueError as e:
+            logger.debug(f"ValueError: {e}")
             error_message = "Unable to decode response"
             logger.error(error_message)
             raise StairwellAPIErrorException(error_message, None) from e
         except requests.ReadTimeout as e:
+            logger.debug(f"ReadTimeout: {e}")
             error_message = "API request timeout"
             logger.error(error_message)
             raise StairwellAPIErrorException(error_message, None) from e

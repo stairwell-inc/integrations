@@ -13,6 +13,7 @@ For the very latest information on how to use this app visit [Stairwell App for 
 This command operates on each event independently resulting from a search. It adds Stairwell enrichment data to each event that matches the type of data and the criteria given.
 
 There are 3 types of data currently supported:
+
 #### Hostnames
 Example: find any field in the event called "host" and add Stairwell hostname enrichment data to it.
 
@@ -45,19 +46,18 @@ See [Stairwell App for Splunk](https://docs.stairwell.com/docs/configure-splunk-
 2. To install the Stairwell App for Splunk you require Splunk privileges that allow app installation and configuration. To use the Stairwell App for Splunk you require priv1, priv2???
 
 ### Installing
-1. Download the app from <github>. This will be called stairwell-splunk-app-1.0.0.tar.gz
+1. Download the app .tar.gz from [GitHub](https://github.com/stairwell-inc/integrations).
 2. Log into your Splunk web interface.
 3. Navigate to Apps > Manage Apps.
 4. Click install app from file.
 5. Use the file explorer to find the file you downloaded.
 6. Click on upload. 
-7. Once the upload is successful you can configure the app.
-8. However, it is recommended that you select "Set up later".
+7. Once the upload is successful, you can configure the app. However, it is recommended that you select "Set up later"
 9. Perform a Splunk restart. ```$SPLUNK_HOME/bin/splunk restart```
 10. Log into your Splunk web interface again.
-11. Navigate to Apps > Stairwell App for Splunk
-12. Click the box that says Continue to app setup page
-13. Enter your Authentication Token and Organization Id then Submit
+11. Navigate to Apps > Stairwell App for Splunk.
+12. Click the box that says "Continue to app setup page"
+13. Enter your Authentication Token and Organization ID, then click Submit.
 14. Stairwell for Splunk App home page will now appear.
 
 ## Troubleshooting
@@ -69,4 +69,4 @@ Please contact __support@stairwell.com__.
 ## Version History
 |Version|Release Date|Compatibility|Compliance|Actions|
 |-------|------------|-------------|----------|-------|
-|1.0.0|TBD|Splunk Enterprise|N/A|Download link|
+|1.0.0|03/17/2025|Splunk Enterprise|N/A|Download link|
