@@ -15,19 +15,12 @@
 
 """Streaming search command for Stairwell"""
 
-import os
 import sys
 from stairwelllib.stairwellapi import search_stairwell_ip_addresses_api
 from stairwelllib.stairwellapi import search_stairwell_object_api
 from stairwelllib.stairwellapi import search_stairwell_hostname_api
 from stairwelllib.logging import setup_logging
 from splunklib.searchcommands import dispatch, StreamingCommand, Configuration, Option
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "splunklib"))
-
-sys.path.insert(0, os.path.join(
-    os.path.dirname(__file__), "..", "stairwelllib"))
-
 
 @Configuration()
 class Stairwell(StreamingCommand):

@@ -2,6 +2,9 @@
 Thumbs.db
 *.py[co]
 /default/indexes.conf
+/local
 /local/*
 /metadata/local.meta
 samples
+/bin/.pytest_cache
+/bin/.pytest_cache/*
