@@ -22,6 +22,7 @@ from stairwelllib.stairwellapi import search_stairwell_hostname_api
 from stairwelllib.logging import setup_logging
 from splunklib.searchcommands import dispatch, StreamingCommand, Configuration, Option
 
+
 @Configuration()
 class Stairwell(StreamingCommand):
     """Class providing a streaming search command for Stairwell"""
@@ -53,24 +54,35 @@ class Stairwell(StreamingCommand):
 
         for record in records:
             logger.debug("record before = %s", record)
-            if 'ip_field' in locals() and ip_field in record and record[ip_field] != "":
+            if "ip_field" in locals() and ip_field in record and record[ip_field] != "":
                 # Send request to Stairwell API
                 response_dictionary = search_stairwell_ip_addresses_api(
-                    self, logger, record[ip_field])
+                    self, logger, record[ip_field]
+                )
                 for key, value in response_dictionary.items():
                     record[key] = value
 
-            elif 'object_field' in locals() and object_field in record and record[object_field] != "":
+            elif (
+                "object_field" in locals()
+                and object_field in record
+                and record[object_field] != ""
+            ):
                 # Send request to Stairwell API
                 response_dictionary = search_stairwell_object_api(
-                    self, logger, record[object_field])
+                    self, logger, record[object_field]
+                )
                 for key, value in response_dictionary.items():
                     record[key] = value
 
-            elif 'hostname_field' in locals() and hostname_field in record and record[hostname_field] != "":
+            elif (
+                "hostname_field" in locals()
+                and hostname_field in record
+                and record[hostname_field] != ""
+            ):
                 # Send request to Stairwell API
                 response_dictionary = search_stairwell_hostname_api(
-                    self, logger, record[hostname_field])
+                    self, logger, record[hostname_field]
+                )
                 for key, value in response_dictionary.items():
                     record[key] = value
 
