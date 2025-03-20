@@ -16,11 +16,30 @@
 """Streaming search command for Stairwell"""
 
 import sys
+import json
+from logging import Logger
+from typing import Optional
 from stairwelllib.stairwellapi import search_stairwell_ip_addresses_api
 from stairwelllib.stairwellapi import search_stairwell_object_api
 from stairwelllib.stairwellapi import search_stairwell_hostname_api
-from stairwelllib.logging import setup_logging
+from stairwelllib.client import StairwellAPI, StairwellEnrichmentClient
+from stairwelllib.swlogging import setup_logging
 from splunklib.searchcommands import dispatch, StreamingCommand, Configuration, Option
+
+BASE_URL = "https://app.stairwell.com/"
+
+SECRET_REALM = "stairwell_realm"
+SECRET_NAME = "admin"
+
+
+def get_encrypted_token(search_command):
+    """Retrieves an app configuration token, comprising password, organizationId, userId"""
+    secrets = search_command.service.storage_passwords
+    return next(
+        secret
+        for secret in secrets
+        if (secret.realm == SECRET_REALM and secret.username == SECRET_NAME)
+    ).clear_password
 
 
 @Configuration()
@@ -31,9 +50,31 @@ class Stairwell(StreamingCommand):
     object = Option(require=False)
     hostname = Option(require=False)
 
+    client: Optional[StairwellAPI] = None
+
+    def init_client(self, logger: Optional[Logger] = None):
+        """Initializes the Stairwell enrichment API client. Should be called
+        before any requests are attempted.
+        """
+        secrets = get_encrypted_token(self)
+        secrets_json = json.loads(secrets)
+        auth_token = secrets_json["password"]
+        organization_id = secrets_json["organizationId"]
+        user_id = secrets_json["userId"]
+
+        client = StairwellEnrichmentClient(
+            BASE_URL, auth_token, organization_id, user_id
+        )
+        client.logger = logger
+        self.client = client
+
     def stream(self, records):
         logger = setup_logging()
         logger.info("Stairwell - stream - entered")
+
+        if self.client == None:
+            logger.info("Initializing Stairwell API client...")
+            self.init_client()
 
         arg_counter = 0
         if self.ip and len(self.ip) != 0:
