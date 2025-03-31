@@ -1,16 +1,17 @@
 # Stairwell App for Splunk
 
-Add Stairwell enrichment data to your Splunk events with the Stairwell App for Splunk. This application uses Stairwell private malware analysis to integrate directly with your Splunk experience. Enrich Splunk events based on analyis of hostnames, IP Address and file hashes.
+Add Stairwell enrichment data to your Splunk events with the Stairwell App for Splunk. This application uses Stairwell private malware analysis to integrate directly with your Splunk experience. Enrich Splunk events based on analyis of hostnames, IP addresses and file hashes.
 
-The Stairwell App for Splunk requires a valid Stairwell API license and Splunk user privileges required for app installation. The app makes calls to the Stairwell API. When the app is installed you have access to Stairwell commands to provide data enrichment that extends your defences beyond the limitations of traditional SIEMS tools.
+The Stairwell App for Splunk requires a valid Stairwell API license and Splunk user privileges required for app installation. The app makes calls to the Stairwell API. When the app is installed, you'll have access to Stairwell commands that provide data enrichment extending your defenses beyond the limitations of traditional SIEM tools.
 
-The Stairwell App for Splunk is compatible with Splunk Enterprise 9.4.0
+The Stairwell App for Splunk is compatible with Splunk Enterprise 9.4.0.
 
-For the very latest information on how to use this app visit [Stairwell App for Splunk](https://docs.stairwell.com/docs/configure-splunk-application)
+For the very latest information on how to use this app, visit [Stairwell App for Splunk](https://docs.stairwell.com/docs/configure-splunk-application).
 
 ## Details
-### Streaming command
-This command operates on each event independently resulting from a search. It adds Stairwell enrichment data to each event that matches the type of data and the criteria given.
+
+### Streaming Command
+This command operates on each event resulting from a search independently. It adds Stairwell enrichment data to each event that matches the type of data and the criteria given.
 
 There are 3 types of data currently supported:
 
@@ -22,7 +23,7 @@ Example: find any field in the event called "host" and add Stairwell hostname en
 ```
 
 #### IP Addresses
-Example: find any field in the event called "ipaddress" and add Stairwell IP Address enrichment data to it.
+Example: find any field in the event called "ip" and add Stairwell IP address enrichment data to it.
 
 ```
 | makeresults | eval ip = "192.168.0.1" | stairwell ip="ip"
@@ -30,7 +31,7 @@ Example: find any field in the event called "ipaddress" and add Stairwell IP Add
 
 #### Objects (file hashes)
 File hashes currently supported include MD5, SHA1, SHA256.
-Example: find any field in the event called "SHA256" and add Stairwell object enrichment data to it.
+Example: find any field in the event called "hash" and add Stairwell object enrichment data to it.
 
 ```
 | makeresults | eval hash = "0385eeab00e946a302b24a91dea4187c1210597b8e17cd9e2230450f5ece21da" | stairwell object="hash"
@@ -40,25 +41,27 @@ Example: find any field in the event called "SHA256" and add Stairwell object en
 See [Stairwell App for Splunk](https://docs.stairwell.com/docs/configure-splunk-application) for details.
 
 ## Installation
-### Prerequisites
-1. To use the Stairwell analysis capability you will require an Authentication Token and an Organization Id.
-1.1 If you have an existing Stairwell account, please go to https://app.stairwell.com/settings.  If not, please contact sales@stairwell.com
-2. To install the Stairwell App for Splunk you require Splunk privileges that allow app installation and configuration. To use the Stairwell App for Splunk you require priv1, priv2???
 
-### Installing
-1. Download the app .tar.gz from [GitHub](https://github.com/stairwell-inc/integrations).
+### Prerequisites
+
+1. To use the Stairwell app, you need an authentication token and an organization ID. If you have an existing Stairwell account, please go to https://app.stairwell.com/settings to generate a token and retrieve your organization ID. If not, please contact __sales@stairwell.com__.
+2. To install and set up the app, you require Splunk privileges that allow app installation and configuration.
+
+### Installation Process
+
+1. Download the latest version of the app from [Splunkbase](https://splunkbase.splunk.com/app/7788).
 2. Log into your Splunk web interface.
-3. Navigate to Apps > Manage Apps.
+3. Navigate to "Apps" > "Manage Apps."
 4. Click install app from file.
 5. Use the file explorer to find the file you downloaded.
 6. Click on upload. 
-7. Once the upload is successful, you can configure the app. However, it is recommended that you select "Set up later"
-9. Perform a Splunk restart. ```$SPLUNK_HOME/bin/splunk restart```
-10. Log into your Splunk web interface again.
-11. Navigate to Apps > Stairwell App for Splunk.
-12. Click the box that says "Continue to app setup page"
-13. Enter your Authentication Token and Organization ID, then click Submit.
-14. Stairwell for Splunk App home page will now appear.
+7. Once the upload is successful, you can configure the app.
+8. Perform a Splunk restart. ```$SPLUNK_HOME/bin/splunk restart```
+9. Log into your Splunk web interface again.
+10. Navigate to "Apps" > "Stairwell App for Splunk."
+11. Click the box that says "Continue to app setup page."
+12. Enter your authentication token and organization ID, then click Submit.
+13. The Stairwell for Splunk App home page will now appear.
 
 ## Troubleshooting
 Please contact __support@stairwell.com__ for help.
@@ -67,6 +70,6 @@ Please contact __support@stairwell.com__ for help.
 Please contact __support@stairwell.com__.
 
 ## Version History
-|Version|Release Date|Compatibility|Compliance|Actions|
-|-------|------------|-------------|----------|-------|
-|1.0.0|03/17/2025|Splunk Enterprise|N/A|Download link|
+|Version|Release Date|Compatibility|
+|-------|------------|-------------|
+|1.0.0|03/17/2025|Splunk Enterprise 9.4|
