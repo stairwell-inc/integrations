@@ -74,7 +74,7 @@ class Stairwell(StreamingCommand):
 
         if self.client == None:
             logger.info("Initializing Stairwell API client...")
-            self.init_client()
+            self.init_client(logger)
 
         arg_counter = 0
         if self.ip and len(self.ip) != 0:

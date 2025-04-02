@@ -103,7 +103,7 @@ class StairwellEnrichmentClient(StairwellAPI):
             else:
                 # For all other status codes, report a general error along with
                 # the extracted code and message if found:
-                code = (decoded_response.get(CODE_FIELD),)
+                code = decoded_response.get(CODE_FIELD)
                 message = decoded_response.get(MESSAGE_FIELD)
                 return {
                     "stairwell_status": "ERROR",

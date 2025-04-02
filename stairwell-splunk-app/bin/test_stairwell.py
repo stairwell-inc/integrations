@@ -1,6 +1,6 @@
+import logging
 from stairwell import Stairwell
 from stairwelllib.client import StairwellAPI
-from stairwelllib.swlogging import fake_logger
 import stairwelllib.stairwellapi
 
 
@@ -30,7 +30,7 @@ class FakeStairwellClient(StairwellAPI):
 
 
 def test_search_stairwell_hostname_api():
-    logger = fake_logger()
+    logger = logging.getLogger("splunk.stairwell.test")
 
     fake_client = FakeStairwellClient()
     fake_client.hostname_data["downloadmoreram.com"] = {
