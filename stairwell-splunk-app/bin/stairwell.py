@@ -50,12 +50,14 @@ class Stairwell(StreamingCommand):
     object = Option(require=False)
     hostname = Option(require=False)
 
-    client: Optional[StairwellAPI] = None
+    client: Optional[StairwellAPI] = (
+        None  # If None, will be intialized when the command is run
+    )
+    custom_logger: Logger
 
-    def init_client(self, logger: Optional[Logger] = None):
-        """Initializes the Stairwell enrichment API client. Should be called
-        before any requests are attempted.
-        """
+    def init_client(self) -> StairwellAPI:
+        """Initializes the Stairwell enrichment API client using values from the secrets store."""
+        self.prepare()  # required to initialize `SearchCommand.service`.
         secrets = get_encrypted_token(self)
         secrets_json = json.loads(secrets)
         auth_token = secrets_json["password"]
@@ -63,18 +65,30 @@ class Stairwell(StreamingCommand):
         user_id = secrets_json["userId"]
 
         client = StairwellEnrichmentClient(
-            BASE_URL, auth_token, organization_id, user_id
+            BASE_URL, auth_token, organization_id, user_id, self.logger
         )
-        client.logger = logger
+        return client
+
+    def __init__(
+        self,
+        client: Optional[StairwellAPI] = None,
+        custom_logger: Optional[Logger] = None,
+    ):
+        super().__init__()
+        if custom_logger == None:
+            custom_logger = setup_logging()
+        self.custom_logger = custom_logger
         self.client = client
 
     def stream(self, records):
-        logger = setup_logging()
+        logger = self.custom_logger
         logger.info("Stairwell - stream - entered")
 
+        # Unless we're injecting a double, we want to initialize the client here as doing so earlier
+        # does not give us access to credentials stored via Splunk's secret storage.
         if self.client == None:
             logger.info("Initializing Stairwell API client...")
-            self.init_client(logger)
+            self.client = self.init_client()
 
         arg_counter = 0
         if self.ip and len(self.ip) != 0:

@@ -71,8 +71,7 @@ def test_search_stairwell_hostname_api():
         ],
     }
 
-    command = Stairwell()
-    command.client = fake_client
+    command = Stairwell(client=fake_client, custom_logger=logger)
 
     res = stairwelllib.stairwellapi.search_stairwell_hostname_api(
         command, logger, "downloadmoreram.com"
