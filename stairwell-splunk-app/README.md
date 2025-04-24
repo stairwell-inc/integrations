@@ -63,6 +63,21 @@ See [Stairwell App for Splunk](https://docs.stairwell.com/docs/configure-splunk-
 12. Enter your authentication token and organization ID, then click Submit.
 13. The Stairwell for Splunk App home page will now appear.
 
+## Development Setup
+
+The Stairwell App for Splunk requires some external Python modules. These dependencies are bundled in with `.tar.gz` distributions of the app, but are not tracked in this repository. So, in order to do development work on the app, you'll need to do the following:
+
+1. Install Stairwell-external dependencies via `pip`. These should be placed in `/bin/lib`, which can be done with the following command:
+
+```bash
+# From //integrations/stairwell-splunk-app:
+pip install -r requirements.txt -t bin/lib/
+```
+
+2. Install the [Stairwell AppAPI Python SDK](https://github.com/stairwell-inc/appapi-python), and move the `stairwell_appapi_client` package into the `/bin/stairwelllib` directory.
+
+Assuming you already have the Splunk SDK accessible in your Python environment, you should now be able to run tests via `pytest` without any errors!
+
 ## Troubleshooting
 Please contact __support@stairwell.com__ for help.
 
@@ -73,3 +88,4 @@ Please contact __support@stairwell.com__.
 |Version|Release Date|Compatibility|
 |-------|------------|-------------|
 |1.0.0|03/17/2025|Splunk Enterprise 9.4|
+|1.1.0|04/25/2024|Splunk Enterprise 9.4|

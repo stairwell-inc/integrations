@@ -15,8 +15,19 @@
 
 """Streaming search command for Stairwell"""
 
+import os
 import sys
 import json
+
+# Since we need to bundle Python dependencies with the Splunk app to ensure it's portable, we need
+# to work around some packages that do not use relative imports by explicitly adding their locations
+# to sys.path. It's ~~a bit~~ hacky, but works for now.
+# It also needs to go here instead of `__init__.py`, since Splunk does not seem to evaluate it.
+sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "lib"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "stairwelllib"))
+
+
 from logging import Logger
 from typing import Optional
 from stairwelllib.stairwellapi import search_stairwell_ip_addresses_api
@@ -65,7 +76,7 @@ class Stairwell(StreamingCommand):
         user_id = secrets_json["userId"]
 
         client = StairwellEnrichmentClient(
-            BASE_URL, auth_token, organization_id, user_id, self.logger
+            BASE_URL, auth_token, organization_id, user_id, self.custom_logger
         )
         return client
 
@@ -112,7 +123,7 @@ class Stairwell(StreamingCommand):
             if "ip_field" in locals() and ip_field in record and record[ip_field] != "":
                 # Send request to Stairwell API
                 response_dictionary = search_stairwell_ip_addresses_api(
-                    self, logger, record[ip_field]
+                    self.client, logger, record[ip_field]
                 )
                 for key, value in response_dictionary.items():
                     record[key] = value
@@ -124,7 +135,7 @@ class Stairwell(StreamingCommand):
             ):
                 # Send request to Stairwell API
                 response_dictionary = search_stairwell_object_api(
-                    self, logger, record[object_field]
+                    self.client, logger, record[object_field]
                 )
                 for key, value in response_dictionary.items():
                     record[key] = value
@@ -136,7 +147,7 @@ class Stairwell(StreamingCommand):
             ):
                 # Send request to Stairwell API
                 response_dictionary = search_stairwell_hostname_api(
-                    self, logger, record[hostname_field]
+                    self.client, logger, record[hostname_field]
                 )
                 for key, value in response_dictionary.items():
                     record[key] = value
