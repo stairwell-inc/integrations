@@ -46,11 +46,6 @@ class StairwellEnrichmentClient(StairwellAPI):
 
     # Base URL of the Stairwell service:
     base_url: str
-    # Request headers for all Stairwell API requests, constructed from auth token, org ID etc:
-    headers: dict[str, str]
-
-    request_timeout: int = 20
-    max_retries: int = 10
 
     def __init__(
         self,
@@ -79,7 +74,6 @@ class StairwellEnrichmentClient(StairwellAPI):
         res = self.client.enrichmentv1_get_object_event_enrichment_v1(
             name=hash,
         )
-        self.logger.debug(f"res: {res}")
         return res
 
     def get_hostname_event_enrichment(self, hostname: str) -> HostnameEventEnrichment:

@@ -7,4 +7,5 @@ Thumbs.db
 /metadata/local.meta
 samples
 /bin/.pytest_cache
-/bin/.pytest_cache/*
+.pytest_cache/
+requirements.txt
