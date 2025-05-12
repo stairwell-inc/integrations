@@ -78,6 +78,8 @@ pip install -r requirements.txt -t bin/lib/
 
 Assuming you already have the Splunk SDK accessible in your Python environment, you should now be able to run tests via `pytest` without any errors!
 
+Alongside Python tests, make sure changes to the app pass [Splunk's AppInspect Validation](https://dev.splunk.com/enterprise/docs/releaseapps/cloudvetting/#Prepare-your-app-or-add-on-for-cloud-vetting) to ensure compatiblity with both Splunk Enterprise and Splunk Cloud.
+
 ## Troubleshooting
 Please contact __support@stairwell.com__ for help.
 
