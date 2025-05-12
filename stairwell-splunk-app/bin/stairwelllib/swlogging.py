@@ -3,16 +3,35 @@
 import logging
 import logging.handlers
 import os
-import splunk
+
+str_to_log_level = {
+    "DEBUG": logging.DEBUG,
+    "INFO": logging.INFO,
+    "WARN": logging.WARNING,
+    "WARNING": logging.WARNING,
+    "ERROR": logging.ERROR,
+    "FATAL": logging.CRITICAL,
+    "CRITICAL": logging.CRITICAL,
+}
+
+STAIRWELL_LOG_KEY = "splunk.stairwell"
 
 
 def setup_logging():
     logger = logging.getLogger("splunk.stairwell")
     SPLUNK_HOME = os.environ["SPLUNK_HOME"]
-
     LOGGING_DEFAULT_CONFIG_FILE = os.path.join(SPLUNK_HOME, "etc", "log.cfg")
-    LOGGING_LOCAL_CONFIG_FILE = os.path.join(SPLUNK_HOME, "etc", "log-local.cfg")
-    LOGGING_STANZA_NAME = "python"
+
+    log_level = logging.ERROR
+    with open(LOGGING_DEFAULT_CONFIG_FILE, "r") as config_file:
+        for line in config_file:
+            tokens = line.split("=")
+            if len(tokens) == 2:
+                key = tokens[0].strip()
+                if key == STAIRWELL_LOG_KEY:
+                    log_level = str_to_log_level[tokens[1].strip()]
+
+    logger.setLevel(log_level)
     LOGGING_FILE_NAME = "stairwell.log"
     BASE_LOG_PATH = os.path.join("var", "log", "splunk")
     LOGGING_FORMAT = "%(asctime)s %(levelname)-s\t%(module)s:%(lineno)d - %(message)s"
@@ -21,10 +40,4 @@ def setup_logging():
     )
     splunk_log_handler.setFormatter(logging.Formatter(LOGGING_FORMAT))
     logger.addHandler(splunk_log_handler)
-    splunk.setupSplunkLogger(
-        logger,
-        LOGGING_DEFAULT_CONFIG_FILE,
-        LOGGING_LOCAL_CONFIG_FILE,
-        LOGGING_STANZA_NAME,
-    )
     return logger
