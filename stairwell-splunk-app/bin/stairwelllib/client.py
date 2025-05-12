@@ -71,10 +71,9 @@ class StairwellEnrichmentClient(StairwellAPI):
 
     def get_object_event_enrichment(self, hash: str) -> ObjectEventEnrichment:
         self.logger.debug(f"req: get_object_event_enrichment({hash})")
-        res = self.client.enrichmentv1_get_object_event_enrichment_v1(
+        return self.client.enrichmentv1_get_object_event_enrichment_v1(
             name=hash,
         )
-        return res
 
     def get_hostname_event_enrichment(self, hostname: str) -> HostnameEventEnrichment:
         self.logger.debug(f"req: get_hostname_event_enrichment({hostname})")
