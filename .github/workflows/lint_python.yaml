@@ -1,0 +1,25 @@
+name: Lint (Python)
+
+on:
+  pull_request:
+    paths:
+      - '**.py'
+
+jobs:
+  lint_python:
+    runs-on: [ubuntu-latest]
+    steps:
+    - name: Check out repository
+      uses: stairwell-inc/checkout@v4
+
+    - name: Set up Python
+      uses: stairwell-inc/setup-python@v4
+      with:
+        python-version: '3.12.3'
+        
+    - name: Install Black
+      run: pip install black
+
+    - name: Run Black
+      run: |
+        black --check .
