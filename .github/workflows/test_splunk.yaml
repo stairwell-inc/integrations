@@ -1,0 +1,35 @@
+name: Test (Splunk)
+
+on:
+  pull_request:
+    paths:
+      - 'stairwell-splunk-app/**'
+
+jobs:
+  test_python:
+    runs-on: [ubuntu-latest]
+    steps:
+    - name: Check out repository
+      uses: stairwell-inc/checkout@v4
+
+    - name: Set up Python
+      uses: stairwell-inc/setup-python@v4
+      with:
+        python-version: '3.12.3'
+    
+    - name: Change directory
+      run: cd stairwell-splunk-app
+
+    - name: Install requirements
+      run: pip install -r requirements.txt -t bin/lib/
+
+    - name: Install stairwell-appapi-python
+      run: |
+        git clone git@github.com:stairwell-inc/appapi-python.git
+        mv appapi-python/stairwell-appapi-python bin/stairwelllib
+
+    - name: Install Pytest
+      run: pip install pytest
+
+    - name: Run Pytest
+      run: pytest
